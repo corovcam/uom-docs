@@ -11,26 +11,26 @@
   "navigation": {
     "pages": [
       {
-        "group": "Getting Started",
+        "group": "Introduction",
+        "directory": "card",
         "pages": [
-          "index",
-          "quickstart"
+          "index"
         ]
       },
       {
         "group": "User Docs",
-        "root": "/docs/frontend",
+        "directory": "card",
         "pages": [
-          "user_guide"
+          "/docs/frontend/user_guide"
         ]
       },
       {
         "group": "Developer Docs",
-        "root": "/docs",
+        "directory": "card",
         "pages": [
           {
             "group": "Backend",
-            "root": "/docs/backend",
+            "expanded": true,
             "pages": [
               "architecture",
               "state_and_context",
@@ -42,7 +42,7 @@
           },
           {
             "group": "Frontend",
-            "root": "/docs/frontend",
+            "expanded": true,
             "pages": [
               "overview",
               "architecture",
