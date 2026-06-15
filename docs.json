@@ -23,7 +23,7 @@
         "directory": "card",
         "icon": "book-open",
         "pages": [
-          "frontend/user_guide"
+          "user_guide"
         ]
       },
       {
@@ -66,8 +66,8 @@
     ]
   },
   "logo": {
-    "light": "logo/logo-uom-white-730.svg",
-    "dark": "logo/logo-uom-black-730.svg"
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
   },
   "navbar": {
     "links": [

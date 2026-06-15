@@ -9,7 +9,7 @@ description: "Welcome to the Universal Object Mapping (UOM) Assistant Documentat
 
 Developed within the **Adaptive Data Management (ADaM) Research Group** at the Department of Software Engineering, Charles University (Faculty of Mathematics and Physics), the project addresses the complex challenges of multi-model database migrations. UOM transitions relational .NET ORM structures (.NET Entity Framework Core, Dapper, NHibernate) into document and graph-based Java Spring Data ecosystems (Spring Data MongoDB, Spring Data Neo4j) with structural compile-and-execute guarantees.
 
-![UOM Translation Workspace](docs/frontend/img/uom-newthreadpage-filled.png)
+![UOM Translation Workspace](img/uom-newthreadpage-filled.png)
 
 ---
 
