@@ -13,6 +13,7 @@
       {
         "group": "Introduction",
         "directory": "card",
+        "icon": "rocket",
         "pages": [
           "index"
         ]
@@ -20,35 +21,44 @@
       {
         "group": "User Docs",
         "directory": "card",
+        "icon": "book-open",
         "pages": [
-          "/docs/frontend/user_guide"
+          "frontend/user_guide"
         ]
       },
       {
         "group": "Developer Docs",
         "directory": "card",
+        "icon": "code",
         "pages": [
           {
             "group": "Backend",
             "expanded": true,
             "pages": [
-              "architecture",
-              "state_and_context",
-              "sandbox_environment",
-              "validators_and_equivalence",
-              "deep_agent_and_acp",
-              "mcp_integration"
+              "backend/architecture",
+              "backend/state_and_context",
+              "backend/sandbox_environment",
+              "backend/validators_and_equivalence",
+              "backend/deep_agent_and_acp",
+              "backend/mcp_integration"
             ]
           },
           {
             "group": "Frontend",
             "expanded": true,
             "pages": [
-              "overview",
-              "architecture",
-              "runtime",
-              "components",
-              "setup"
+              "frontend/overview",
+              "frontend/architecture",
+              "frontend/runtime",
+              "frontend/components",
+              "frontend/setup"
+            ]
+          },
+          {
+            "group": "DevOps",
+            "expanded": true,
+            "pages": [
+              "devops/devops"
             ]
           }
         ]
@@ -56,15 +66,11 @@
     ]
   },
   "logo": {
-    "light": "/logo/logo-uom-white-730.svg",
-    "dark": "/logo/logo-uom-black-730.svg"
+    "light": "logo/logo-uom-white-730.svg",
+    "dark": "logo/logo-uom-black-730.svg"
   },
   "navbar": {
     "links": [
-      {
-        "label": "UOM Assistant App",
-        "href": "https://uom-demo.vercel.app/"
-      },
       {
         "label": "Support",
         "href": "mailto:martincorovcak@gmail.com"
@@ -72,8 +78,8 @@
     ],
     "primary": {
       "type": "button",
-      "label": "Home",
-      "href": "https://uom-cd0f649f.mintlify.app"
+      "label": "UOM Assistant App",
+      "href": "https://uom-demo.vercel.app/"
     }
   },
   "contextual": {
