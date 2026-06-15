@@ -12,12 +12,12 @@
     "global":  {
       "anchors": [
         {
-          "anchor": "LangGraph Backend API Reference",
+          "anchor": "UOM Backend API Reference",
           "icon": "square-terminal",
           "href": "https://api.uom.dyn.cloud.e-infra.cz/docs"
         },
         {
-          "anchor": "Daytona API Reference",
+          "anchor": "UOM Daytona API Reference",
           "icon": "square-terminal",
           "href": "https://daytona.uom.dyn.cloud.e-infra.cz/api"
         }
@@ -26,10 +26,15 @@
     "groups": [
       {
         "group": "Introduction",
-        "directory": "card",
         "icon": "rocket",
         "pages": [
           "index",
+        ]
+      },
+      {
+        "group": "User Docs",
+        "icon": "book-open",
+        "pages": [
           "user_guide"
         ]
       },
@@ -73,8 +78,8 @@
     ]
   },
   "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    "light": "/logo/dark.svg",
+    "dark": "/logo/light.svg"
   },
   "navbar": {
     "links": [
