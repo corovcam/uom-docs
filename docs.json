@@ -9,7 +9,21 @@
   },
   "favicon": "/favicon.svg",
   "navigation": {
-    "pages": [
+    "global":  {
+      "anchors": [
+        {
+          "anchor": "LangGraph Backend API Reference",
+          "icon": "square-terminal",
+          "href": "https://api.uom.dyn.cloud.e-infra.cz/docs"
+        },
+        {
+          "anchor": "Daytona API Reference",
+          "icon": "square-terminal",
+          "href": "https://daytona.uom.dyn.cloud.e-infra.cz/api"
+        }
+      ]
+    },
+    "groups": [
       {
         "group": "Introduction",
         "directory": "card",
@@ -57,6 +71,10 @@
         ]
       }
     ]
+  },
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
   },
   "navbar": {
     "links": [
