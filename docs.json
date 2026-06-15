@@ -15,14 +15,7 @@
         "directory": "card",
         "icon": "rocket",
         "pages": [
-          "index"
-        ]
-      },
-      {
-        "group": "User Docs",
-        "directory": "card",
-        "icon": "book-open",
-        "pages": [
+          "index",
           "user_guide"
         ]
       },
