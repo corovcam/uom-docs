@@ -5,6 +5,25 @@ This guide is designed for database administrators, software engineers, and syst
 > [!NOTE]
 > The Web APP is made for Desktop Browsers (preferably newer Google Chrome) and **IS NOT** optimized for mobile devices! The functionality is not tested there.
 
+## Video preview
+
+This video shows migration from [ASP.NET](http://ASP.NET) Core to Spring Boot ecosystem specifically translating Database Layer i.e Entity Framework Core 10 to Spring Data MongoDB 5.0. The app is made to be used in an IDE of your choice. The developer experience runs inside specialized isolated sandbox containers created on demand via configurable Dockerfiles (think [Codex Cloud Agents](https://developers.openai.com/codex/cloud), [Claude Cloud Agents](https://platform.claude.com/docs/en/managed-agents/overview), [Gemini Jules](https://jules.google/), or self-hosted [OpenHands](https://www.openhands.dev/), etc.).
+
+<Frame>
+  <div style="position: relative; padding-bottom: 62.5%; height: 0;">
+    <iframe 
+      src="https://www.loom.com/embed/1a624d6353d24534b7811b7922c34350" 
+      title="UOM Assistant Demo: EF Core to Spring Data MongoDB Migration"
+      frameborder="0" 
+      webkitallowfullscreen 
+      mozallowfullscreen 
+      allowfullscreen 
+      style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+  </div>
+</Frame>
+
+The translations are configurable inside the UI, currently tailored towards migrating [ASP.NET](http://ASP.NET) ORMs to Spring Boot ORM/ODM/OGM frameworks.
+
 ---
 
 ## 1. Getting Started: The Translation Workspace
