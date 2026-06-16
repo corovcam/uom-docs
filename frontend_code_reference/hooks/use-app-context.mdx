@@ -1,0 +1,42 @@
+## Interfaces
+
+### AppContext
+
+Defined in: [hooks/use-app-context.ts:8](https://github.com/corovcam/Universal-Object-Mapping/blob/main/frontend/uom-translator-ui/hooks/use-app-context.ts#L8)
+
+Context value structure for the global Application state.
+
+## Variables
+
+### AppContext
+
+```ts
+AppContext: Context<AppContext>;
+```
+
+Defined in: [hooks/use-app-context.ts:8](https://github.com/corovcam/Universal-Object-Mapping/blob/main/frontend/uom-translator-ui/hooks/use-app-context.ts#L8)
+
+React Context object that shares the LangGraph state and execution status across the application.
+
+## Functions
+
+### useAppContext()
+
+```ts
+function useAppContext(): AppContext;
+```
+
+Defined in: [hooks/use-app-context.ts:26](https://github.com/corovcam/Universal-Object-Mapping/blob/main/frontend/uom-translator-ui/hooks/use-app-context.ts#L26)
+
+Custom React hook that accesses the AppContext.
+Must be used within an `AssistantRuntimeProviderWrapper` component.
+
+#### Returns
+
+[`AppContext`](#appcontext)
+
+The current AppContext value.
+
+#### Throws
+
+If called outside of a provider context.

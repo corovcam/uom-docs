@@ -1,0 +1,48 @@
+## Namespaces
+
+- [SyntaxHighlighter](namespaces/SyntaxHighlighter.mdx)
+
+## Type Aliases
+
+### HighlighterProps
+
+```ts
+type HighlighterProps = Omit<ShikiHighlighterProps, "children" | "theme"> & {
+  theme?: ShikiHighlighterProps["theme"];
+} & Pick<AUIProps, "language" | "code"> & Partial<Pick<AUIProps, "node" | "components">>;
+```
+
+Defined in: [components/assistant-ui/shiki-highlighter.tsx:11](https://github.com/corovcam/Universal-Object-Mapping/blob/main/frontend/uom-translator-ui/components/assistant-ui/shiki-highlighter.tsx#L11)
+
+Props for the SyntaxHighlighter component
+
+#### Type Declaration
+
+##### theme?
+
+```ts
+optional theme?: ShikiHighlighterProps["theme"];
+```
+
+## Variables
+
+### SyntaxHighlighter
+
+```ts
+const SyntaxHighlighter: FC<HighlighterProps>;
+```
+
+Defined in: [components/assistant-ui/shiki-highlighter.tsx:30](https://github.com/corovcam/Universal-Object-Mapping/blob/main/frontend/uom-translator-ui/components/assistant-ui/shiki-highlighter.tsx#L30)
+
+SyntaxHighlighter component, using react-shiki
+Use it by passing to `defaultComponents` in `markdown-text.tsx`
+
+#### Example
+
+```ts
+const defaultComponents = memoizeMarkdownComponents({
+  SyntaxHighlighter,
+  h1: //...
+  //...other elements...
+});
+```

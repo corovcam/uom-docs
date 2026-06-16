@@ -1,0 +1,21 @@
+## Functions
+
+### createClient()
+
+```ts
+function createClient(): Client<DefaultValues, DefaultValues, unknown>;
+```
+
+Defined in: [lib/chatApi.ts:12](https://github.com/corovcam/Universal-Object-Mapping/blob/main/frontend/uom-translator-ui/lib/chatApi.ts#L12)
+
+Factory function to create and configure a LangGraph SDK Client.
+Automatically resolves the endpoint URL:
+- Reads `NEXT_PUBLIC_LANGGRAPH_API_URL` env variable.
+- In browser context, falls back to appending `/api` to the window location (proxied via Next.js passthrough).
+- Otherwise defaults to `/api`.
+
+#### Returns
+
+`Client`\<`DefaultValues`, `DefaultValues`, `unknown`\>
+
+An instance of the LangGraph SDK Client.

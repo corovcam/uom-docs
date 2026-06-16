@@ -1,0 +1,126 @@
+## Functions
+
+### CodeComponent()
+
+```ts
+function CodeComponent(__namedParameters: {
+  children?: ReactNode;
+  components: {
+     Code: ComponentType<Omit<DetailedHTMLProps<HTMLAttributes<HTMLElement>, HTMLElement>, "ref"> & {
+        node?: Element;
+     }>;
+     Pre: ComponentType<Omit<DetailedHTMLProps<HTMLAttributes<HTMLPreElement>, HTMLPreElement>, "ref"> & {
+        node?: Element;
+     }>;
+  };
+  node?: any;
+} & HTMLAttributes<HTMLElement>): Element;
+```
+
+Defined in: [components/streamdown-text.tsx:61](https://github.com/corovcam/Universal-Object-Mapping/blob/main/frontend/uom-translator-ui/components/streamdown-text.tsx#L61)
+
+Custom renderer for syntax highlighted inline code and code blocks.
+Determines block-level vs inline presentation using the `useIsStreamdownCodeBlock` hook.
+
+#### Parameters
+
+##### \_\_namedParameters
+
+\{
+  `children?`: `ReactNode`;
+  `components`: \{
+     `Code`: `ComponentType`\<`Omit`\<`DetailedHTMLProps`\<`HTMLAttributes`\<`HTMLElement`\>, `HTMLElement`\>, `"ref"`\> & \{
+        `node?`: `Element`;
+     \}\>;
+     `Pre`: `ComponentType`\<`Omit`\<`DetailedHTMLProps`\<`HTMLAttributes`\<`HTMLPreElement`\>, `HTMLPreElement`\>, `"ref"`\> & \{
+        `node?`: `Element`;
+     \}\>;
+  \};
+  `node?`: `any`;
+\} & `HTMLAttributes`\<`HTMLElement`\>
+
+#### Returns
+
+`Element`
+
+***
+
+### JsonCodeComponent()
+
+```ts
+function JsonCodeComponent(__namedParameters: SyntaxHighlighterProps): Element;
+```
+
+Defined in: [components/streamdown-text.tsx:97](https://github.com/corovcam/Universal-Object-Mapping/blob/main/frontend/uom-translator-ui/components/streamdown-text.tsx#L97)
+
+Custom code block renderer specialized for JSON formatting.
+Intercepts text strings in JSON blocks, uses partial JSON decoding to process
+incomplete/streaming payloads, and renders them inside an AutoScrollJsonViewer tree.
+
+#### Parameters
+
+##### \_\_namedParameters
+
+`SyntaxHighlighterProps`
+
+#### Returns
+
+`Element`
+
+***
+
+### StaticStreamdownWrapper()
+
+```ts
+function StaticStreamdownWrapper(props: Omit<StreamdownProps, "children"> & {
+  markdownText: string;
+}): Element;
+```
+
+Defined in: [components/streamdown-text.tsx:135](https://github.com/corovcam/Universal-Object-Mapping/blob/main/frontend/uom-translator-ui/components/streamdown-text.tsx#L135)
+
+React Component for static, non-animated markdown document presentations.
+Normalizes carriage returns and processes custom json blocks on-the-fly.
+
+#### Parameters
+
+##### props
+
+`Omit`\<`StreamdownProps`, `"children"`\> & \{
+  `markdownText`: `string`;
+\}
+
+Wrapper parameters.
+
+#### Returns
+
+`Element`
+
+Static markdown document element.
+
+***
+
+### StreamdownText()
+
+```ts
+function StreamdownText(props: {
+}): Element;
+```
+
+Defined in: [components/streamdown-text.tsx:38](https://github.com/corovcam/Universal-Object-Mapping/blob/main/frontend/uom-translator-ui/components/streamdown-text.tsx#L38)
+
+React Component to render streaming Markdown text with typing animations and carets.
+Plugs into `@assistant-ui/react-streamdown` and supports code syntax highlighting
+(using Shiki) and Mermaid diagram parsing dynamically.
+
+#### Parameters
+
+##### props
+
+Pass-through props.
+
+#### Returns
+
+`Element`
+
+The streaming Markdown rendering primitive.

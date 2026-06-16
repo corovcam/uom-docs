@@ -1,0 +1,12 @@
+SyntaxHighlighter component, using react-shiki
+Use it by passing to `defaultComponents` in `markdown-text.tsx`
+
+## Example
+
+```ts
+const defaultComponents = memoizeMarkdownComponents({
+  SyntaxHighlighter,
+  h1: //...
+  //...other elements...
+});
+```

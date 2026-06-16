@@ -1,0 +1,19 @@
+## Functions
+
+### useIsMobile()
+
+```ts
+function useIsMobile(): boolean;
+```
+
+Defined in: [hooks/use-mobile.ts:16](https://github.com/corovcam/Universal-Object-Mapping/blob/main/frontend/uom-translator-ui/hooks/use-mobile.ts#L16)
+
+Custom React hook that detects whether the current viewport is mobile-sized.
+Uses window.matchMedia to listen to viewport resize events reactively,
+preventing hydration mismatches by initializing as undefined and updating on mount.
+
+#### Returns
+
+`boolean`
+
+True if the screen width is less than the MOBILE_BREAKPOINT (768px).

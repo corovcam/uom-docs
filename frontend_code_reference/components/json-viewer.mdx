@@ -1,0 +1,55 @@
+## Functions
+
+### AutoScrollJsonViewer()
+
+```ts
+function AutoScrollJsonViewer(props: AutoScrollJsonViewerProps): Element;
+```
+
+Defined in: [components/json-viewer.tsx:86](https://github.com/corovcam/Universal-Object-Mapping/blob/main/frontend/uom-translator-ui/components/json-viewer.tsx#L86)
+
+Enhanced JSON tree viewer wrapper that handles automatic scroll locking.
+Keeps the scroll position pinned to the bottom of the container while JSON is streaming,
+unless the user manually scrolls upwards to view historical lines.
+
+#### Parameters
+
+##### props
+
+`AutoScrollJsonViewerProps`
+
+Component properties.
+
+#### Returns
+
+`Element`
+
+Scroll-aware container wrapping the JSON tree.
+
+***
+
+### JsonViewer()
+
+```ts
+function JsonViewer(props: JsonViewProps<object>): Element;
+```
+
+Defined in: [components/json-viewer.tsx:19](https://github.com/corovcam/Universal-Object-Mapping/blob/main/frontend/uom-translator-ui/components/json-viewer.tsx#L19)
+
+React Component that visualizes objects as formatted, interactive JSON trees.
+Automatically supports light and dark themes using next-themes.
+Incorporates custom string node formatting to preserve line breaks and white spaces.
+
+#### Parameters
+
+##### props
+
+`JsonViewProps`\<`object`\>
+
+Props passed down to the underlying `@uiw/react-json-view` component.
+
+#### Returns
+
+`Element`
+
+Interactive JSON tree element.

@@ -1,0 +1,20 @@
+## Functions
+
+### InterruptHandler()
+
+```ts
+function InterruptHandler(): Element | null;
+```
+
+Defined in: [components/assistant-ui/interrupt-handler.tsx:26](https://github.com/corovcam/Universal-Object-Mapping/blob/main/frontend/uom-translator-ui/components/assistant-ui/interrupt-handler.tsx#L26)
+
+React Component to handle LangGraph Suspended state.
+Intercepts human-in-the-loop validation checkpoints when the orchestrator
+hits compiler failures or equivalence warnings, rendering the errors and
+providing buttons to Accept or Reject & Correct the translation.
+
+#### Returns
+
+`Element` \| `null`
+
+The interrupt control card, or null if execution is not suspended.

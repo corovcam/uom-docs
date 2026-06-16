@@ -1,0 +1,17 @@
+## Variables
+
+### ~~ReasoningGroup~~
+
+```ts
+const ReasoningGroup: NamedExoticComponent<ReasoningGroupProps>;
+```
+
+Defined in: [components/assistant-ui/reasoning.tsx:270](https://github.com/corovcam/Universal-Object-Mapping/blob/main/frontend/uom-translator-ui/components/assistant-ui/reasoning.tsx#L270)
+
+#### Deprecated
+
+This wrapper targets the legacy `components.ReasoningGroup`
+prop on `<MessagePrimitive.Parts>`. Use `<MessagePrimitive.GroupedParts>`
+with a `groupBy` returning `"group-reasoning"` and compose `ReasoningRoot`
+/ `ReasoningTrigger` / `ReasoningContent` / `ReasoningText` directly.
+See `thread.tsx` for an example.

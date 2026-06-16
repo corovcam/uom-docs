@@ -1,0 +1,99 @@
+## Enumerations
+
+### SupportedIDEs
+
+Defined in: [components/ide-link.tsx:20](https://github.com/corovcam/Universal-Object-Mapping/blob/main/frontend/uom-translator-ui/components/ide-link.tsx#L20)
+
+Supported IDE protocols that can hook into remote sandboxes.
+
+#### Enumeration Members
+
+##### cursor
+
+```ts
+cursor: "cursor";
+```
+
+Defined in: [components/ide-link.tsx:24](https://github.com/corovcam/Universal-Object-Mapping/blob/main/frontend/uom-translator-ui/components/ide-link.tsx#L24)
+
+Cursor AI Editor (cursor:// scheme)
+
+##### vscode
+
+```ts
+vscode: "vscode";
+```
+
+Defined in: [components/ide-link.tsx:22](https://github.com/corovcam/Universal-Object-Mapping/blob/main/frontend/uom-translator-ui/components/ide-link.tsx#L22)
+
+Visual Studio Code (vscode:// scheme)
+
+## Interfaces
+
+### SandboxInfo
+
+Defined in: [components/ide-link.tsx:30](https://github.com/corovcam/Universal-Object-Mapping/blob/main/frontend/uom-translator-ui/components/ide-link.tsx#L30)
+
+Sandbox authentication details and SSH endpoints retrieved from Daytona client API.
+
+#### Properties
+
+##### framework
+
+```ts
+framework: FrameworkType | null;
+```
+
+Defined in: [components/ide-link.tsx:32](https://github.com/corovcam/Universal-Object-Mapping/blob/main/frontend/uom-translator-ui/components/ide-link.tsx#L32)
+
+Active compilation framework (e.g. dotnet_efcore, java_spring_data_mongodb).
+
+##### sandboxId
+
+```ts
+sandboxId: string;
+```
+
+Defined in: [components/ide-link.tsx:34](https://github.com/corovcam/Universal-Object-Mapping/blob/main/frontend/uom-translator-ui/components/ide-link.tsx#L34)
+
+Container instance ID allocated by Daytona.
+
+##### sshCommand
+
+```ts
+sshCommand: string;
+```
+
+Defined in: [components/ide-link.tsx:36](https://github.com/corovcam/Universal-Object-Mapping/blob/main/frontend/uom-translator-ui/components/ide-link.tsx#L36)
+
+Standard SSH connection command.
+
+##### token
+
+```ts
+token: string;
+```
+
+Defined in: [components/ide-link.tsx:38](https://github.com/corovcam/Universal-Object-Mapping/blob/main/frontend/uom-translator-ui/components/ide-link.tsx#L38)
+
+Ephemeral API token for connection handshake.
+
+## Functions
+
+### IdeLink()
+
+```ts
+function IdeLink(): Element;
+```
+
+Defined in: [components/ide-link.tsx:48](https://github.com/corovcam/Universal-Object-Mapping/blob/main/frontend/uom-translator-ui/components/ide-link.tsx#L48)
+
+React Component providing deep links and SSH credentials for IDEs.
+Enables developers to connect VS Code or Cursor directly into
+the Daytona container compilation sandboxes in order to examine build environments or debug code.
+
+#### Returns
+
+`Element`
+
+Remote workspace linking controls.

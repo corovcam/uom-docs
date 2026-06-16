@@ -1,0 +1,132 @@
+---
+title: main
+description: '[<span className="flex items-center gap-1"><Icon icon="external-link"/>View
+  Source</span>](https://github.com/corovcam/Universal-Object-Mapping/tree/main/services/orchestrator/src/server/main.py)'
+---
+
+Main application entry point for the API server.
+
+#### server.main.init\_sandboxes
+
+```python
+async def init_sandboxes()
+```
+
+[<span className='flex items-center gap-1'><Icon icon='external-link' />View Source</span>](https://github.com/corovcam/Universal-Object-Mapping/blob/main/services/orchestrator/src/server/main.py#L22)
+
+Initialize the application's sandboxes.
+
+**Raises**:
+
+- `RuntimeError`: If the application's sandboxes cannot be initialized.
+
+#### server.main.create\_sandbox\_snapshots
+
+```python
+async def create_sandbox_snapshots(daytona: AsyncDaytona)
+```
+
+[<span className='flex items-center gap-1'><Icon icon='external-link' />View Source</span>](https://github.com/corovcam/Universal-Object-Mapping/blob/main/services/orchestrator/src/server/main.py#L31)
+
+Creates snapshots of the sandbox environments.
+
+#### server.main.cache\_sandboxes
+
+```python
+async def cache_sandboxes(daytona: AsyncDaytona)
+```
+
+[<span className='flex items-center gap-1'><Icon icon='external-link' />View Source</span>](https://github.com/corovcam/Universal-Object-Mapping/blob/main/services/orchestrator/src/server/main.py#L36)
+
+Create and cache the sandboxes.
+
+**Arguments**:
+
+- `daytona`: The Daytona API client.
+
+**Raises**:
+
+- `RuntimeError`: If the application's sandboxes cannot be initialized.
+
+#### server.main.lifespan
+
+```python
+@asynccontextmanager
+async def lifespan(app: FastAPI)
+```
+
+[<span className='flex items-center gap-1'><Icon icon='external-link' />View Source</span>](https://github.com/corovcam/Universal-Object-Mapping/blob/main/services/orchestrator/src/server/main.py#L49)
+
+Manage application lifespan.
+
+## server.main.NormalizedFramework Objects
+
+```python
+class NormalizedFramework(StrEnum)
+```
+
+[<span className='flex items-center gap-1'><Icon icon='external-link' />View Source</span>](https://github.com/corovcam/Universal-Object-Mapping/blob/main/services/orchestrator/src/server/main.py#L58)
+
+Enumeration of standardized framework identifier strings used in HTTP requests/responses.
+
+## server.main.SshAccessResponse Objects
+
+```python
+class SshAccessResponse(BaseModel)
+```
+
+[<span className='flex items-center gap-1'><Icon icon='external-link' />View Source</span>](https://github.com/corovcam/Universal-Object-Mapping/blob/main/services/orchestrator/src/server/main.py#L68)
+
+Pydantic model representing connection details for SSH access to an active Daytona sandbox.
+
+**Attributes**:
+
+- `sandbox_id` - The unique identifier of the sandbox container.
+- `token` - Access token for authenticating with the Daytona API/CLI.
+- `ssh_command` - Pre-formatted SSH connection command for direct shell access.
+
+## server.main.SandboxDTO Objects
+
+```python
+class SandboxDTO(BaseModel)
+```
+
+[<span className='flex items-center gap-1'><Icon icon='external-link' />View Source</span>](https://github.com/corovcam/Universal-Object-Mapping/blob/main/services/orchestrator/src/server/main.py#L82)
+
+Data transfer object for Daytona sandbox information.
+
+#### server.main.list\_sandboxes
+
+```python
+@app.get("/sandboxes", response_model=list[SandboxDTO])
+async def list_sandboxes()
+```
+
+[<span className='flex items-center gap-1'><Icon icon='external-link' />View Source</span>](https://github.com/corovcam/Universal-Object-Mapping/blob/main/services/orchestrator/src/server/main.py#L94)
+
+List all available sandboxes from the Daytona API server.
+
+#### server.main.get\_sandbox\_for\_framework
+
+```python
+@app.get("/sandboxes/framework/{framework}", response_model=SandboxDTO)
+async def get_sandbox_for_framework(framework: NormalizedFramework)
+```
+
+[<span className='flex items-center gap-1'><Icon icon='external-link' />View Source</span>](https://github.com/corovcam/Universal-Object-Mapping/blob/main/services/orchestrator/src/server/main.py#L121)
+
+Get the specific sandbox for a given framework by hitting the Daytona API.
+
+#### server.main.create\_ssh\_token
+
+```python
+@app.post("/sandbox/{sandbox_id}/ssh-token", response_model=SshAccessResponse)
+async def create_ssh_token(sandbox_id: str)
+```
+
+[<span className='flex items-center gap-1'><Icon icon='external-link' />View Source</span>](https://github.com/corovcam/Universal-Object-Mapping/blob/main/services/orchestrator/src/server/main.py#L157)
+
+Create an SSH access token for a given Daytona sandbox.
+
+The access token is valid indefinitely.
+

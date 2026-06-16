@@ -87,39 +87,39 @@
         ]
       },
       {
-        "tab": "Code Reference",
+        "tab": "Backend Code Reference",
         "directory": "accordion",
         "groups": [
           {
             "group": "UOM Translator (LangGraph)",
-            "root": "code_reference/react_agent/index",
+            "root": "backend_code_reference/react_agent/index",
             "pages": [
-              "code_reference/react_agent/graph",
-              "code_reference/react_agent/state",
-              "code_reference/react_agent/context",
-              "code_reference/react_agent/prompts",
-              "code_reference/react_agent/tools",
-              "code_reference/react_agent/constants",
+              "backend_code_reference/react_agent/graph",
+              "backend_code_reference/react_agent/state",
+              "backend_code_reference/react_agent/context",
+              "backend_code_reference/react_agent/prompts",
+              "backend_code_reference/react_agent/tools",
+              "backend_code_reference/react_agent/constants",
               {
                 "group": "Custom Tools",
                 "pages": [
-                  "code_reference/react_agent/custom_tools/docs_search",
-                  "code_reference/react_agent/custom_tools/dotnet_validator",
-                  "code_reference/react_agent/custom_tools/java_validator",
-                  "code_reference/react_agent/custom_tools/mcp_database",
-                  "code_reference/react_agent/custom_tools/query_validator",
-                  "code_reference/react_agent/custom_tools/sandbox_tools"
+                  "backend_code_reference/react_agent/custom_tools/docs_search",
+                  "backend_code_reference/react_agent/custom_tools/dotnet_validator",
+                  "backend_code_reference/react_agent/custom_tools/java_validator",
+                  "backend_code_reference/react_agent/custom_tools/mcp_database",
+                  "backend_code_reference/react_agent/custom_tools/query_validator",
+                  "backend_code_reference/react_agent/custom_tools/sandbox_tools"
                 ]
               },
               {
                 "group": "Utils",
                 "pages": [
-                  "code_reference/react_agent/utils/deterministic_checks",
-                  "code_reference/react_agent/utils/preprocessing",
-                  "code_reference/react_agent/utils/request_logging",
-                  "code_reference/react_agent/utils/sandboxes",
-                  "code_reference/react_agent/utils/types",
-                  "code_reference/react_agent/utils/utils"
+                  "backend_code_reference/react_agent/utils/deterministic_checks",
+                  "backend_code_reference/react_agent/utils/preprocessing",
+                  "backend_code_reference/react_agent/utils/request_logging",
+                  "backend_code_reference/react_agent/utils/sandboxes",
+                  "backend_code_reference/react_agent/utils/types",
+                  "backend_code_reference/react_agent/utils/utils"
                 ]
               }
             ]
@@ -127,14 +127,78 @@
           {
             "group": "UOM Deep Agent (UOM Assistant)",
             "pages": [
-              "code_reference/uom_deep_agent/uom_agent",
-              "code_reference/uom_deep_agent/local_context"
+              "backend_code_reference/uom_deep_agent/uom_agent",
+              "backend_code_reference/uom_deep_agent/local_context"
             ]
           },
           {
             "group": "UOM ACP (Agent Client Protocol)",
             "pages": [
-              "code_reference/uom_acp/main"
+              "backend_code_reference/uom_acp/main"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Frontend Code Reference",
+        "root": "frontend_code_reference/index",
+        "groups": [
+          {
+            "group": "app",
+            "pages": [
+              "frontend_code_reference/app/page"
+            ]
+          },
+          {
+            "group": "components",
+            "pages": [
+              {
+                "group": "assistant-ui",
+                "pages": [
+                  "frontend_code_reference/components/assistant-ui/interrupt-handler",
+                  "frontend_code_reference/components/assistant-ui/reasoning",
+                  {
+                    "group": "runtime",
+                    "pages": [
+                      "frontend_code_reference/components/assistant-ui/runtime/assistant-runtime-provider",
+                      "frontend_code_reference/components/assistant-ui/runtime/toolkit"
+                    ]
+                  },
+                  {
+                    "group": "shiki-highlighter",
+                    "pages": [
+                      {
+                        "group": "Namespaces",
+                        "pages": [
+                          "frontend_code_reference/components/assistant-ui/shiki-highlighter/namespaces/SyntaxHighlighter"
+                        ]
+                      }
+                    ],
+                    "root": "frontend_code_reference/components/assistant-ui/shiki-highlighter/index"
+                  },
+                  "frontend_code_reference/components/assistant-ui/thread",
+                  "frontend_code_reference/components/assistant-ui/tool-group"
+                ]
+              },
+              "frontend_code_reference/components/ide-link",
+              "frontend_code_reference/components/json-viewer",
+              "frontend_code_reference/components/streamdown-text"
+            ]
+          },
+          {
+            "group": "hooks",
+            "pages": [
+              "frontend_code_reference/hooks/use-app-context",
+              "frontend_code_reference/hooks/use-graph-state-context",
+              "frontend_code_reference/hooks/use-mobile"
+            ]
+          },
+          {
+            "group": "lib",
+            "pages": [
+              "frontend_code_reference/lib/chatApi",
+              "frontend_code_reference/lib/types",
+              "frontend_code_reference/lib/utils"
             ]
           }
         ]

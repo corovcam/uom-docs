@@ -1,0 +1,154 @@
+## Variables
+
+### NODE\_NAME\_MAP
+
+```ts
+const NODE_NAME_MAP: {
+  check_query_equivalence_node: string;
+  evaluation_node: string;
+  extract_input: string;
+  generate_translation_node: string;
+  human_intervention_node: string;
+  prep_query_equivalence: string;
+  prep_query_validation: string;
+  prep_schema_validation: string;
+  schema_inspection: string;
+  validate_query_node: string;
+  validate_schema_node: string;
+};
+```
+
+Defined in: [components/assistant-ui/runtime/assistant-runtime-provider.tsx:33](https://github.com/corovcam/Universal-Object-Mapping/blob/main/frontend/uom-translator-ui/components/assistant-ui/runtime/assistant-runtime-provider.tsx#L33)
+
+Mapping of LangGraph node execution IDs to human-friendly description titles.
+Used in the UI sidebar/header to show the user the active step of the migration process.
+
+#### Type Declaration
+
+##### check\_query\_equivalence\_node
+
+```ts
+check_query_equivalence_node: string = "Evaluating Translation (Query Equivalence Check)";
+```
+
+Node calculating DeepDiff semantic difference for outputs
+
+##### evaluation\_node
+
+```ts
+evaluation_node: string = "Evaluating Translation (Query Equivalence Check)";
+```
+
+Node executing LLM Judge evaluation for compile stdout/stderr and query equivalence
+
+##### extract\_input
+
+```ts
+extract_input: string = "Extracting Input";
+```
+
+Node responsible for using Pydantic schemas to extract framework specifications from C# inputs
+
+##### generate\_translation\_node
+
+```ts
+generate_translation_node: string = "Translating Code";
+```
+
+Node executing LLM translation of source mappings to target entities/queries
+
+##### human\_intervention\_node
+
+```ts
+human_intervention_node: string = "Manual Intervention";
+```
+
+Suspended state graph node waiting for manual user intervention
+
+##### prep\_query\_equivalence
+
+```ts
+prep_query_equivalence: string = "Evaluating Translation (Query Equivalence Check)";
+```
+
+Node preparing SQL Server vs MongoDB/Neo4j query results comparison
+
+##### prep\_query\_validation
+
+```ts
+prep_query_validation: string = "Validating Query Logic";
+```
+
+Node preparing target query validation payloads
+
+##### prep\_schema\_validation
+
+```ts
+prep_schema_validation: string = "Validating Schema (.NET & Java)";
+```
+
+Node setting up workspace schemas for .csproj or pom.xml builds
+
+##### schema\_inspection
+
+```ts
+schema_inspection: string = "Inspecting Database Schema";
+```
+
+Node checking database schemas using MCP server tools
+
+##### validate\_query\_node
+
+```ts
+validate_query_node: string = "Validating Query Logic";
+```
+
+Node executing target query compilations inside sandboxes
+
+##### validate\_schema\_node
+
+```ts
+validate_schema_node: string = "Validating Schema (.NET & Java)";
+```
+
+Node executing isolated container compilation via Daytona
+
+## Functions
+
+### AssistantRuntimeProviderWrapper()
+
+```ts
+function AssistantRuntimeProviderWrapper(props: {
+  children: ReactNode;
+  inputSuggestions: any;
+}): Element;
+```
+
+Defined in: [components/assistant-ui/runtime/assistant-runtime-provider.tsx:128](https://github.com/corovcam/Universal-Object-Mapping/blob/main/frontend/uom-translator-ui/components/assistant-ui/runtime/assistant-runtime-provider.tsx#L128)
+
+Wrapper component that sets up the LangGraph client, manages local React state for execution tracking,
+and configures the `@assistant-ui/react-langgraph` runtime with hooks, streams, and thread lists.
+
+#### Parameters
+
+##### props
+
+Component properties.
+
+###### children
+
+`ReactNode`
+
+Child components to render within the state provider.
+
+###### inputSuggestions
+
+`any`
+
+Array of onboarding query templates read from txt files.
+
+#### Returns
+
+`Element`
+
+The runtime provider and state provider context wrapper.
