@@ -56,30 +56,30 @@
                 "group": "Backend",
                 "expanded": true,
                 "pages": [
-                  "backend/architecture",
-                  "backend/state_and_context",
-                  "backend/sandbox_environment",
-                  "backend/validators_and_equivalence",
-                  "backend/deep_agent_and_acp",
-                  "backend/mcp_integration"
+                  "developer_docs/backend/architecture",
+                  "developer_docs/backend/state_and_context",
+                  "developer_docs/backend/sandbox_environment",
+                  "developer_docs/backend/validators_and_equivalence",
+                  "developer_docs/backend/deep_agent_and_acp",
+                  "developer_docs/backend/mcp_integration"
                 ]
               },
               {
                 "group": "Frontend",
                 "expanded": true,
                 "pages": [
-                  "frontend/overview",
-                  "frontend/architecture",
-                  "frontend/runtime",
-                  "frontend/components",
-                  "frontend/setup"
+                  "developer_docs/frontend/overview",
+                  "developer_docs/frontend/architecture",
+                  "developer_docs/frontend/runtime",
+                  "developer_docs/frontend/components",
+                  "developer_docs/frontend/setup"
                 ]
               },
               {
                 "group": "DevOps",
                 "expanded": true,
                 "pages": [
-                  "devops/devops"
+                  "developer_docs/devops/devops"
                 ]
               }
             ]
@@ -201,7 +201,8 @@
               "frontend_code_reference/lib/utils"
             ]
           }
-        ]
+        ],
+        "directory": "accordion"
       }
     ]
   },

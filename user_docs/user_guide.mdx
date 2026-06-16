@@ -22,29 +22,31 @@ This video shows migration from [ASP.NET](http://ASP.NET) Core to Spring Boot ec
     style={{ width: '100%', aspectRatio: '16/9' }}></iframe>
 </Frame>
 
-The translations are configurable inside the UI, currently tailored towards migrating [ASP.NET](http://ASP.NET) ORMs to Spring Boot ORM/ODM/OGM frameworks.
+The translations are configurable inside the UI, currently tailored towards migrating .NET ORMs to Spring Data ODM (Spring Data MongoDB) and OGM (Spring Data Neo4j) frameworks.
 
 ---
 
 ## 1. Getting Started: The Translation Workspace
 
-When you open the web application at `http://localhost:3001` (in local development), you are presented with the main translation workspace.
+When you open the web application at [https://uom-demo.vercel.app](https://uom-demo.vercel.app/), you are presented with the main translation workspace.
 
 ![UOM Translation Workspace - Empty State](../img/uom-newthreadpage.png)
 
 ### 1.1 The Navigation Sidebar
 *   **New Thread**: Click the **New Thread** button at the top of the sidebar to spin up a clean translation session. Each thread represents a separate migration pipeline execution with its own LangGraph checkpoint history.
 *   **Thread List**: Lists your active and past migration sessions. You can click on any thread to reload its conversational state and inspect its generated artifacts.
-*   **Thread Actions**: Hover over any thread in the list and click the `...` menu to **Rename**, **Archive**, or **Delete** the session.
-*   **Settings**: Click the **Settings** gear to access database connection strings and LLM configurations.
+*   **Thread Actions**: Hover over any thread in the list and click the `...` menu to **Archive**, or **Delete** the session.
+*   **Settings**: Click the **Settings** gear to access again Onboarding, configure database connections, LLM configurations and Daytona Sandboxes.
 *   **Theme Toggle**: Switch between **Light Mode** and **Dark Mode**.
 
 ### 1.2 Conversation Thread Suggestion Cards
-For new sessions, the chat workspace displays four pre-configured translation suggestion cards. Clicking any card loads the corresponding source code inputs into the composer:
-1.  **EF Core to Spring Data MongoDB**: Translates Entity Framework Core 10 mappings to target Spring Data MongoDB 5.0 documents.
-2.  **EF Core to Spring Data Neo4j**: Translates Entity Framework Core 10 mappings to Spring Data Neo4j 8.0 nodes and relationships.
-3.  **Dapper to Spring Data MongoDB**: Translates Dapper SQL queries into MongoDB document aggregation pipelines.
-4.  **NHibernate to Spring Data MongoDB**: Translates NHibernate XML mappings or fluent class structures to target MongoDB collections.
+For new sessions, the chat workspace displays four pre-configured translation suggestion cards. Clicking any card loads the corresponding source code inputs into the composer (the input box at the bottom of the screen) and kickstarts a translation run when you click **Send**. The four default cards are:
+1.  **EF Core to Spring Data MongoDB**: Translates Entity Framework Core 10 schema, queries, and configurations to target Spring Data MongoDB 5.0 document models and [MongoTemplate (Criteria/Query)](https://docs.spring.io/spring-data/mongodb/reference/mongodb/template-query-operations.html) queries.
+2.  **EF Core to Spring Data Neo4j**: Translates Entity Framework Core 10 schema, queries, and configurations to Spring Data Neo4j 8.0 nodes and relationship classes with [Neo4jTemplate](https://docs.spring.io/spring-data/neo4j/reference/api/java/org/springframework/data/neo4j/core/Neo4jTemplate.html) (https://neo4j.github.io/cypher-dsl/2025.2.7/) queries.
+3.  **Dapper to Spring Data MongoDB**: Translates Dapper SQL schema, queries, and configurations into Spring Data MongoDB document models and MongoTemplate (Criteria/Query) queries.
+4.  **NHibernate to Spring Data MongoDB**: Translates NHibernate schema, queries, and configurations ([Mapping-by-Code mappings](https://notherdev.blogspot.com/2012/02/nhibernates-mapping-by-code-summary.html)) to target Spring Data MongoDB.
+
+See [Design Decisions](./design_decisions.mdx) for the rationale behind these specific framework choices and translation directions.
 
 ![Translation Run - Step 2.1: Tool Calls Detailed View](../img/uom-newthreadpage-filled.png "Translation Run - Step 2.1: Tool Calls Detailed View")
 
