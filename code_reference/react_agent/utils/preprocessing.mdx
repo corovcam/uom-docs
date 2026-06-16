@@ -1,0 +1,31 @@
+---
+title: preprocessing
+description: '[<span className="flex items-center gap-1"><Icon icon="external-link"/>View
+  Source</span>](https://github.com/corovcam/Universal-Object-Mapping/tree/main/services/orchestrator/src/react_agent/utils/preprocessing.py)'
+---
+
+Mapping preprocessing helpers for MongoDB and Neo4j.
+
+#### react\_agent.utils.preprocessing.get\_neo4j\_standalone\_mapping
+
+```python
+async def get_neo4j_standalone_mapping(
+) -> (dict[Literal["databases", "nodes", "relationships"], dict[str, Any]] |
+      None)
+```
+
+[<span className='flex items-center gap-1'><Icon icon='external-link' />View Source</span>](https://github.com/corovcam/Universal-Object-Mapping/blob/main/services/orchestrator/src/react_agent/utils/preprocessing.py#L661)
+
+Load standalone SQL-to-Neo4j mapping grouped into nodes and relationships.
+
+#### react\_agent.utils.preprocessing.get\_mongodb\_standalone\_mapping
+
+```python
+async def get_mongodb_standalone_mapping(
+) -> (dict[Literal["databases", "collections"], dict[str, Any]] | None)
+```
+
+[<span className='flex items-center gap-1'><Icon icon='external-link' />View Source</span>](https://github.com/corovcam/Universal-Object-Mapping/blob/main/services/orchestrator/src/react_agent/utils/preprocessing.py#L688)
+
+Load standalone SQL-to-MongoDB mapping grouped into collections.
+

@@ -1,0 +1,38 @@
+---
+title: prompts
+description: '[<span className="flex items-center gap-1"><Icon icon="external-link"/>View
+  Source</span>](https://github.com/corovcam/Universal-Object-Mapping/tree/main/services/orchestrator/src/react_agent/prompts.py)'
+---
+
+System Prompts for LangGraph Nodes.
+
+These multi-line strings define the core persona, instructions, and few-shot 
+examples for the LLM agents operating within the orchestrator's state machine.
+They are dynamically interpolated at runtime using str.format() to inject 
+the chosen frameworks and context variables.
+
+#### react\_agent.prompts.SYSTEM\_PROMPT\_EXTRACTION
+
+Information Extraction prompt used at the very beginning of the graph execution.
+Its purpose is strictly to classify intent (translation type) and extract the raw code.
+
+#### react\_agent.prompts.SYSTEM\_PROMPT\_SCHEMA\_INSPECTOR
+
+Schema inspection prompt used prior to code translation.
+Guides the agent to use the MCP tools to interact with live relational and NoSQL databases.
+
+#### react\_agent.prompts.build\_system\_prompt
+
+```python
+async def build_system_prompt(state: State) -> str
+```
+
+[<span className='flex items-center gap-1'><Icon icon='external-link' />View Source</span>](https://github.com/corovcam/Universal-Object-Mapping/blob/main/services/orchestrator/src/react_agent/prompts.py#L723)
+
+Dynamically build the system prompt based on the specific translation pair.
+
+This function assembles a comprehensive system prompt by combining the base persona,
+rules, and dynamic framework configurations retrieved from the file system snippets.
+It injects the exact C# and Java dependencies (like pom.xml or .csproj values) directly
+into the prompt context so the LLM understands the exact versions it is translating for.
+

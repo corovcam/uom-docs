@@ -3,13 +3,19 @@
   "theme": "mint",
   "name": "Universal Object Mapping (UOM) Assistant Documentation",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#5441fe",
+    "light": "#6f75ff",
+    "dark": "#5441fe"
   },
   "favicon": "/favicon.svg",
+  "appearance": {
+    "default": "dark"
+  },
+  "background": {
+    "decoration": "gradient"
+  },
   "navigation": {
-    "global":  {
+    "global": {
       "anchors": [
         {
           "anchor": "UOM Backend API Reference",
@@ -23,54 +29,112 @@
         }
       ]
     },
-    "groups": [
+    "tabs": [
       {
-        "group": "Introduction",
-        "icon": "rocket",
-        "pages": [
-          "index"
-        ]
-      },
-      {
-        "group": "User Docs",
-        "icon": "book-open",
-        "pages": [
-          "user_guide"
-        ]
-      },
-      {
-        "group": "Developer Docs",
-        "directory": "card",
-        "icon": "code",
-        "pages": [
+        "tab": "Documentation",
+        "groups": [
           {
-            "group": "Backend",
-            "expanded": true,
+            "group": "Introduction",
+            "icon": "rocket",
             "pages": [
-              "backend/architecture",
-              "backend/state_and_context",
-              "backend/sandbox_environment",
-              "backend/validators_and_equivalence",
-              "backend/deep_agent_and_acp",
-              "backend/mcp_integration"
+              "index"
             ]
           },
           {
-            "group": "Frontend",
-            "expanded": true,
+            "group": "User Docs",
+            "icon": "book-open",
             "pages": [
-              "frontend/overview",
-              "frontend/architecture",
-              "frontend/runtime",
-              "frontend/components",
-              "frontend/setup"
+              "user_docs/user_guide"
             ]
           },
           {
-            "group": "DevOps",
-            "expanded": true,
+            "group": "Developer Docs",
+            "directory": "card",
+            "icon": "code",
             "pages": [
-              "devops/devops"
+              {
+                "group": "Backend",
+                "expanded": true,
+                "pages": [
+                  "backend/architecture",
+                  "backend/state_and_context",
+                  "backend/sandbox_environment",
+                  "backend/validators_and_equivalence",
+                  "backend/deep_agent_and_acp",
+                  "backend/mcp_integration"
+                ]
+              },
+              {
+                "group": "Frontend",
+                "expanded": true,
+                "pages": [
+                  "frontend/overview",
+                  "frontend/architecture",
+                  "frontend/runtime",
+                  "frontend/components",
+                  "frontend/setup"
+                ]
+              },
+              {
+                "group": "DevOps",
+                "expanded": true,
+                "pages": [
+                  "devops/devops"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Code Reference",
+        "directory": "accordion",
+        "groups": [
+          {
+            "group": "UOM Translator (LangGraph)",
+            "root": "code_reference/react_agent/index",
+            "pages": [
+              "code_reference/react_agent/graph",
+              "code_reference/react_agent/state",
+              "code_reference/react_agent/context",
+              "code_reference/react_agent/prompts",
+              "code_reference/react_agent/tools",
+              "code_reference/react_agent/constants",
+              {
+                "group": "Custom Tools",
+                "pages": [
+                  "code_reference/react_agent/custom_tools/docs_search",
+                  "code_reference/react_agent/custom_tools/dotnet_validator",
+                  "code_reference/react_agent/custom_tools/java_validator",
+                  "code_reference/react_agent/custom_tools/mcp_database",
+                  "code_reference/react_agent/custom_tools/query_validator",
+                  "code_reference/react_agent/custom_tools/sandbox_tools"
+                ]
+              },
+              {
+                "group": "Utils",
+                "pages": [
+                  "code_reference/react_agent/utils/deterministic_checks",
+                  "code_reference/react_agent/utils/preprocessing",
+                  "code_reference/react_agent/utils/request_logging",
+                  "code_reference/react_agent/utils/sandboxes",
+                  "code_reference/react_agent/utils/types",
+                  "code_reference/react_agent/utils/utils"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "UOM Deep Agent (UOM Assistant)",
+            "pages": [
+              "code_reference/uom_deep_agent/uom_agent",
+              "code_reference/uom_deep_agent/local_context"
+            ]
+          },
+          {
+            "group": "UOM ACP (Agent Client Protocol)",
+            "pages": [
+              "code_reference/uom_acp/main"
             ]
           }
         ]
@@ -85,7 +149,8 @@
     "links": [
       {
         "label": "Support",
-        "href": "mailto:martincorovcak@gmail.com"
+        "href": "mailto:martincorovcak@gmail.com",
+        "icon": "envelope"
       }
     ],
     "primary": {

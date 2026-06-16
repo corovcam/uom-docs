@@ -1,0 +1,33 @@
+---
+title: context
+description: '[<span className="flex items-center gap-1"><Icon icon="external-link"/>View
+  Source</span>](https://github.com/corovcam/Universal-Object-Mapping/tree/main/services/orchestrator/src/react_agent/context.py)'
+---
+
+Define the configurable parameters for the agent.
+
+## react\_agent.context.Context Objects
+
+```python
+@dataclass(kw_only=True)
+class Context()
+```
+
+[<span className='flex items-center gap-1'><Icon icon='external-link' />View Source</span>](https://github.com/corovcam/Universal-Object-Mapping/blob/main/services/orchestrator/src/react_agent/context.py#L13)
+
+The runtime context and configuration parameters for the orchestrator agent.
+
+This dataclass holds all environment-specific configurations, such as connection strings,
+API keys, URLs, model preferences, and timeouts needed by the LangGraph application.
+Fields are automatically populated from environment variables if not explicitly provided.
+
+#### Context.\_\_post\_init\_\_
+
+```python
+def __post_init__() -> None
+```
+
+[<span className='flex items-center gap-1'><Icon icon='external-link' />View Source</span>](https://github.com/corovcam/Universal-Object-Mapping/blob/main/services/orchestrator/src/react_agent/context.py#L147)
+
+Fetch env vars for attributes that were not passed as args.
+

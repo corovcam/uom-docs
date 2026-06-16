@@ -1,0 +1,91 @@
+---
+title: dotnet_validator
+description: '[<span className="flex items-center gap-1"><Icon icon="external-link"/>View
+  Source</span>](https://github.com/corovcam/Universal-Object-Mapping/tree/main/services/orchestrator/src/react_agent/custom_tools/dotnet_validator.py)'
+---
+
+Dotnet compilation and validation tool using execute_in_sandbox.
+
+## react\_agent.custom\_tools.dotnet\_validator.DotnetValidationInput Objects
+
+```python
+class DotnetValidationInput(BaseModel)
+```
+
+[<span className='flex items-center gap-1'><Icon icon='external-link' />View Source</span>](https://github.com/corovcam/Universal-Object-Mapping/blob/main/services/orchestrator/src/react_agent/custom_tools/dotnet_validator.py#L44)
+
+Pydantic input model for specifying .NET validation parameters.
+
+**Attributes**:
+
+- `source_code` - The C# source code (either schema mapping or query) to compile and run.
+- `framework` - The specific .NET target framework (e.g., EF Core, Dapper, NHibernate).
+
+#### react\_agent.custom\_tools.dotnet\_validator.compile\_and\_run\_dotnet
+
+```python
+async def compile_and_run_dotnet(
+        source_code: str, framework: DotnetFramework,
+        runtime: ToolRuntime[Context, State]) -> tuple[str, str | None]
+```
+
+[<span className='flex items-center gap-1'><Icon icon='external-link' />View Source</span>](https://github.com/corovcam/Universal-Object-Mapping/blob/main/services/orchestrator/src/react_agent/custom_tools/dotnet_validator.py#L56)
+
+Compile and execute C# code within an isolated Daytona Sandbox container.
+
+This complex utility performs several steps to validate .NET code:
+1. Generates the appropriate .csproj file based on the target framework.
+2. Builds a comprehensive bash script (`run.sh`) to compile and execute the code.
+3. Provisions environment variables and database connection strings.
+4. Base64 encodes all payload files to safely transfer them over to the sandbox.
+5. Invokes the `execute_in_sandbox` tool.
+6. If a query output JSON was produced, it downloads it via `download_file_from_sandbox`.
+
+**Arguments**:
+
+- `source_code` _str_ - The raw C# source code to compile and run.
+- `framework` _DotnetFramework_ - The target .NET framework (EF Core, Dapper, etc.).
+- `runtime` _ToolRuntime[Context, State]_ - The LangGraph tool runtime containing context and state.
+  
+
+**Returns**:
+
+  tuple[str, str | None]: A tuple containing the standard output/error log of the execution,
+  and the raw JSON string of the query results (if applicable and successful).
+  
+
+**Raises**:
+
+- `RuntimeError` - If fetching the framework config fails or the sandbox execution throws an exception.
+
+#### react\_agent.custom\_tools.dotnet\_validator.validate\_dotnet\_code
+
+```python
+@tool("validate_dotnet_code", args_schema=DotnetValidationInput)
+async def validate_dotnet_code(
+        source_code: str, framework: DotnetFramework,
+        runtime: ToolRuntime[Context, State]) -> Command | str
+```
+
+[<span className='flex items-center gap-1'><Icon icon='external-link' />View Source</span>](https://github.com/corovcam/Universal-Object-Mapping/blob/main/services/orchestrator/src/react_agent/custom_tools/dotnet_validator.py#L265)
+
+LangChain Tool wrapper to execute and evaluate .NET code inside a Sandbox.
+
+This tool acts as a bridge between the LangGraph state machine and the low-level sandbox
+execution. It calls `compile_and_run_dotnet` and then parses the returned JSON results.
+Crucially, it determines whether it is currently validating the "source" query or the
+"target" query based on the tool call ID or state comparison, and dynamically issues a
+LangGraph `Command` to update the global state with the parsed `QueryValidationResults`.
+
+**Arguments**:
+
+- `source_code` _str_ - The C# source code to validate.
+- `framework` _DotnetFramework_ - The target .NET framework.
+- `runtime` _ToolRuntime[Context, State]_ - Automatically injected runtime context.
+  
+
+**Returns**:
+
+  Command | str: A LangGraph state update command containing parsed results and the
+  execution log, or just the error string if validation fails.
+

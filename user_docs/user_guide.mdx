@@ -1,13 +1,13 @@
 ---
 title: "User Guide"
+description: "UOM Assistant Frontend: User & Operator Guide"
 ---
-
-# UOM Assistant Frontend: User & Operator Guide
 
 This guide is designed for database administrators, software engineers, and system architects who use the **Universal Object Mapping (UOM) Assistant** to migrate frameworks to any framework, currently tailored towards database schemas and queries from [ASP.NET](https://dotnet.microsoft.com/en-us/apps/aspnet) ORMs ([Entity Framework Core](https://learn.microsoft.com/en-us/ef/core/), [NHibernate](https://nhibernate.info/), [Dapper](https://github.com/DapperLib/Dapper)) to target [Java Spring](https://spring.io/) ORM/ODM/OGM ([Spring Data MongoDB](https://spring.io/projects/spring-data-mongodb/), [Spring Data Neo4j](https://spring.io/projects/spring-data-neo4j/)) architectures, and vice versa.
 
-> [!NOTE]
-> The Web APP is made for Desktop Browsers (preferably newer Google Chrome) and **IS NOT** optimized for mobile devices! The functionality is not tested there.
+<Note>
+The Web APP is made for Desktop Browsers (preferably newer Google Chrome) and **IS NOT** optimized for mobile devices! The functionality is not tested there.
+</Note>
 
 ## Video preview
 
@@ -30,7 +30,7 @@ The translations are configurable inside the UI, currently tailored towards migr
 
 When you open the web application at `http://localhost:3001` (in local development), you are presented with the main translation workspace.
 
-![UOM Translation Workspace - Empty State](img/uom-newthreadpage.png)
+![UOM Translation Workspace - Empty State](../img/uom-newthreadpage.png)
 
 ### 1.1 The Navigation Sidebar
 *   **New Thread**: Click the **New Thread** button at the top of the sidebar to spin up a clean translation session. Each thread represents a separate migration pipeline execution with its own LangGraph checkpoint history.
@@ -46,9 +46,9 @@ For new sessions, the chat workspace displays four pre-configured translation su
 3.  **Dapper to Spring Data MongoDB**: Translates Dapper SQL queries into MongoDB document aggregation pipelines.
 4.  **NHibernate to Spring Data MongoDB**: Translates NHibernate XML mappings or fluent class structures to target MongoDB collections.
 
-![Translation Run - Step 2.1: Tool Calls Detailed View](img/uom-newthreadpage-filled.png "Translation Run - Step 2.1: Tool Calls Detailed View")
+![Translation Run - Step 2.1: Tool Calls Detailed View](../img/uom-newthreadpage-filled.png "Translation Run - Step 2.1: Tool Calls Detailed View")
 
-![Translation Run - Step 2.2: Schema Inspection Summary](img/uom-newthreadpage-filled-light.png "Translation Run - Step 2.2: Schema Inspection Summary")
+![Translation Run - Step 2.2: Schema Inspection Summary](../img/uom-newthreadpage-filled-light.png "Translation Run - Step 2.2: Schema Inspection Summary")
 
 ---
 
@@ -58,20 +58,20 @@ Before running your first translation, configure the settings modal (click the *
 
 <AccordionGroup>
   <Accordion title="Onboarding" icon="user-plus">
-    <img src="img/uom-settings-onboarding1.png" alt="Onboarding setup screen 1" />
-    <img src="img/uom-settings-onboarding2.png" alt="Onboarding setup screen 2" />
+    <img src="../img/uom-settings-onboarding1.png" alt="Onboarding setup screen 1" />
+    <img src="../img/uom-settings-onboarding2.png" alt="Onboarding setup screen 2" />
   </Accordion>
 
   <Accordion title="LLM Settings" icon="sliders">
-    <img src="img/uom-settings-llm.png" alt="LLM settings panel" />
+    <img src="../img/uom-settings-llm.png" alt="LLM settings panel" />
   </Accordion>
 
   <Accordion title="Database Settings" icon="database">
-    <img src="img/uom-settings-db.png" alt="Database connections" />
+    <img src="../img/uom-settings-db.png" alt="Database connections" />
   </Accordion>
 
   <Accordion title="Daytona (Sandboxes) Settings" icon="box">
-    <img src="img/uom-settings-daytona.png" alt="Daytona sandbox setup" />
+    <img src="../img/uom-settings-daytona.png" alt="Daytona sandbox setup" />
   </Accordion>
 </AccordionGroup>
 
@@ -103,31 +103,31 @@ To execute a migration, paste your C# source schema and query code in the compos
 
 ### 3.1 Translation Run - Submitting Input
 
-{/* 
+
 <p align="center">
-  <img src="img/uom-threadrun-start-dark.png" alt="Translation Run - Step 1: Submitting Input" title="Translation Run - Step 1: Submitting Input" />
+  <img src="../img/uom-threadrun-start-dark.png" alt="Translation Run - Step 1: Submitting Input" title="Translation Run - Step 1: Submitting Input" />
 </p>
 
 3.2 Translation Run - DB Schema Inspection Tool Calls (left) and Schema Inspection Summary (right)
 
 <p align="center" style={{ display: 'flex', justifyContent: 'center', gap: '5px' }}>
-  <img src="img/uom-threadrun-toolcalls-schema.png" width="49%" alt="Translation Run - Step 2.1: Tool Calls Detailed View" title="Translation Run - Step 2.1: Tool Calls Detailed View" />
-  <img src="img/uom-threadrun-schema.png" width="49%" alt="Translation Run - Step 2.2: Schema Inspection Summary" title="Translation Run - Step 2.2: Schema Inspection Summary" /> 
+  <img src="../img/uom-threadrun-toolcalls-schema.png" width="49%" alt="Translation Run - Step 2.1: Tool Calls Detailed View" title="Translation Run - Step 2.1: Tool Calls Detailed View" />
+  <img src="../img/uom-threadrun-schema.png" width="49%" alt="Translation Run - Step 2.2: Schema Inspection Summary" title="Translation Run - Step 2.2: Schema Inspection Summary" /> 
 </p>
 
 3.3 Translation Run - Daytona Sandbox Code Compilation & Validation (left) and DeepDiff Equivalence Evaluation (right)
 
 <p align="center" style={{ display: 'flex', justifyContent: 'center', gap: '5px' }}>
-  <img src="img/uom-threadrun-translation-validation.png" width="49%" alt="Translation Run - Step 3: Daytona Sandbox Code Compilation" title="Translation Run - Step 3: Daytona Sandbox Code Compilation" />
-  <img src="img/uom-threadrun-equivalence-evaluation.png" width="49%" alt="Translation Run - Step 4: DeepDiff Query Equivalence Check" title="Translation Run - Step 4: DeepDiff Query Equivalence Check" />
+  <img src="../img/uom-threadrun-translation-validation.png" width="49%" alt="Translation Run - Step 3: Daytona Sandbox Code Compilation" title="Translation Run - Step 3: Daytona Sandbox Code Compilation" />
+  <img src="../img/uom-threadrun-equivalence-evaluation.png" width="49%" alt="Translation Run - Step 4: DeepDiff Query Equivalence Check" title="Translation Run - Step 4: DeepDiff Query Equivalence Check" />
 </p>
 
 3.5 Translation Run - Completed Run with Final Output
 
 <p align="center">
-  <img src="img/uom-threadrun-end-light.png" alt="Translation Run - Step 5: Completed Run (Light Theme)" title="Translation Run - Step 5: Completed Run (Light Theme)" />
+  <img src="../img/uom-threadrun-end-light.png" alt="Translation Run - Step 5: Completed Run (Light Theme)" title="Translation Run - Step 5: Completed Run (Light Theme)" />
 </p>
-*/}
+
 
 ### 3.1 Stepper Nodes & Execution Progress
 During execution, a progress banner and/or specific graph prompts (hidden in accordions) is shown at the top/bottom of the current message, which indicates the current active pipeline step:
