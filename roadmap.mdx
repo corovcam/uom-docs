@@ -1,0 +1,28 @@
+---
+title: "Future Roadmap"
+description: "Details the planned enhancements and roadmap milestones for the UOM project."
+---
+
+This document outlines the planned future milestones and enhancements for the Universal Object Mapping (UOM) framework.
+
+## 1. Latency Optimization (Sandbox Caching)
+Currently, sandbox compilations run inside isolated, clean Daytona docker containers. Each run resolves dependencies and downloads Maven packages or Nuget components.
+* **Goal**: Pre-bake standard Maven plugins (`.m2` cache) and NuGet dependencies (`.nuget` fallback folders) into the Daytona sandbox image layer.
+* **Impact**: Reduce compile/build validation times from ~3 minutes to under 10 seconds.
+
+## 2. Advanced Context and Prompt Engineering
+As target databases scale, mapping files grow. This can overwhelm the LLM's context window.
+* **Goal**: Implement a Vector-DB retrieval mechanism (using Postgres vector extensions) to dynamically query and inject only the relevant schema mappings.
+* **Impact**: Support large schemas with thousands of tables/entities without hitting context limits or inflating token costs.
+
+## 3. Expanding Translation Support
+* **Goal**: Support additional ORM and ODM frameworks, including Python (SQLAlchemy to Beanie/Motor), Node.js (Prisma to Mongoose), and Go (GORM to Ent).
+* **Goal**: Support additional target paradigms, such as Relational to Time-Series (MSSQL to InfluxDB).
+
+## 4. Human-in-the-Loop Workflow Improvements
+Currently, when `MAX_TRANSLATION_LOOPS = 3` is reached, the orchestrator routes to `human_intervention_node` which triggers a simple interrupt.
+* **Goal**: Build a web-based IDE widget inside the ORMorpher UI. This will allow developers to modify failing target code in real-time, view side-by-side compilation errors, and submit back to the graph validation loop.
+
+## 5. Extensive Evaluation Experiments
+* **Goal**: Set up automated translation benchmark suites utilizing the WideWorldImporters (WWI) dataset and query sets.
+* **Goal**: Systematically calculate pass/fail rates across different LLM backends (Ollama, EINFRA, OpenAI, Anthropic) to optimize translation accuracy and model selection.

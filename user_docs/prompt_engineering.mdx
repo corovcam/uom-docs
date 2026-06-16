@@ -1,0 +1,58 @@
+---
+title: "Prompt Engineering"
+description: "Details how LLM prompts are dynamically constructed, selected, and injected with framework configurations and few-shot templates."
+---
+
+To achieve high translation accuracy between different Object-Relational Mapping (ORM), Object-Document Mapping (ODM), and Object-Graph Mapping (OGM) frameworks, the UOM Orchestrator dynamically constructs its system prompts. Rather than using static templates, it gathers ground-truth environment configs and few-shot examples corresponding strictly to the translation pair requested.
+
+The core implementation lives in `services/orchestrator/src/react_agent/prompts.py`.
+
+## The System Prompt Builder
+
+The orchestrator invokes the asynchronous function `build_system_prompt(state: State)` to assemble the system instructions for the translator agent. 
+
+```python
+async def build_system_prompt(state: State) -> str:
+    """Dynamically build the system prompt based on the specific translation pair.
+    
+    This function assembles a comprehensive system prompt by combining the base persona,
+    rules, and dynamic framework configurations retrieved from the file system snippets.
+    It injects the exact C# and Java dependencies (like pom.xml or .csproj values) directly
+    into the prompt context so the LLM understands the exact versions it is translating for.
+    """
+    assert state.source_target is not None and state.destination_target is not None
+    base_prompt = f"""You are a Universal Object Mapping architect. Your goal is to aid in translating database schema structures and query logic between diverse languages and frameworks.
+...
+Source ({state.source_target.value})
+{await get_framework_config_content(state.source_target)}
+Target ({state.destination_target.value})
+{await get_framework_config_content(state.destination_target)}
+...
+"""
+```
+
+## Dependency Injection via Configuration Content
+
+By calling `get_framework_config_content(framework)`, the orchestrator reads the target configuration file (like `efcore-sandbox.csproj` or `mongo-pom.xml`) and injects it directly into the prompt. This tells the LLM:
+- The exact compiler and SDK versions.
+- The precise list of third-party libraries and versions (e.g. `Spring Data MongoDB`, `Spring Data Neo4j`, `NHibernate`, `Dapper`, etc.).
+- Critical compiler flags and language versions.
+
+This avoids hallucinated or outdated APIs that would cause compiler warnings or failures during sandbox validation.
+
+## Few-Shot Example Snippets Injection
+
+Using `get_snippet_content(framework, is_schema)`, the orchestrator reads compilation skeleton examples (e.g. `EFCoreSchemaValidationEntrypoint.cs`, `MongoQueryEntrypoint.java`, etc.) and appends them as few-shot demonstrations. 
+
+The LLM receives:
+1. Verbatim inputs of source schemas and query code.
+2. Verified translations of target schemas.
+3. Completely valid, executable harness logic (such as custom Jackson serializers, test fixtures, query builders, and database connection logic).
+
+## Key Benefits
+
+| Benefit | Description |
+| :--- | :--- |
+| **Token Efficiency** | Instead of polluting the context window with templates for all 5 frameworks, the orchestrator only injects configs/snippets relevant to the active translation source and target. |
+| **Syntax Precision** | Injecting `.csproj` and `pom.xml` configurations guarantees that generated code matches the strict compilation rules of the target framework. |
+| **Cross-Framework Isolation** | The rules for Spring Data MongoDB do not leak into spring-data-neo4j prompts, keeping the attention of the model focused. |

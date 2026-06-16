@@ -1,5 +1,77 @@
 ---
 title: "Design Decisions"
-description: "An in-depth look at the rationale behind our architectural and design choices for the Universal Object Mapping (UOM) project, including framework selections, translation directions, and prompt engineering strategies."
+description: "An in-depth look at the rationale behind our architectural and design choices for the Universal Object Mapping (UOM) project, including framework selections and translation directions."
 ---
 
+During the architecture phase of the Universal Object Mapping (UOM) project, a key decision was made to prefer programmatic template APIs over standard Spring Data / .NET Repository abstractions. This document outlines the rationale behind this design.
+
+## Template APIs vs. Repository Patterns
+
+Standard Repository interfaces (such as Spring Data `MongoRepository` or `Neo4jRepository`) rely heavily on classpath scanning, annotation-driven bootstrapping, and complex runtime proxy generation. In a lightweight validation sandbox environment, bootstrapping a full Spring `ApplicationContext` is slow, memory-intensive, and often impossible without complete application context setup.
+
+Instead, the UOM orchestrator targets programmatic template APIs:
+- **Spring Data MongoDB**: `MongoTemplate` and the `Criteria` / `Query` APIs.
+- **Spring Data Neo4j**: `Neo4jTemplate` and the programmatic `Cypher-DSL` builders.
+
+### Rationale & Key Benefits
+
+### 1. Compile-Time Sandbox Validation
+By using template APIs, query translations can be compiled and verified inside lightweight Java class wrappers with standard main entry points. They do not require a booted Spring Container.
+For example, a query validation harness for MongoDB is completely self-contained:
+
+```java
+final class Query1 {
+    public static Query query() {
+        LocalDate from = LocalDate.of(2014, 12, 20);
+        LocalDate to = LocalDate.of(2014, 12, 31);
+        return new Query(Criteria.where("pickingCompletedWhen").gte(from).lte(to));
+    }
+
+    public static Map<String, Object> harness(MongoTemplate template) {
+        Query q = query();
+        long count = template.count(q, OrderLine.class);
+        // ... (sorting, limit logic, and sample retrieval)
+        return Map.of("mongoQuery", Map.of("collection", template.getCollectionName(OrderLine.class), "filter", q.getQueryObject()), "count", count);
+    }
+}
+```
+
+### 2. Cypher-DSL for Spring Data Neo4j
+Direct string concatenation of Cypher queries is highly prone to injection, formatting issues, and syntactic errors. By mandating the use of Spring Data Neo4j's programmatic Cypher-DSL, queries are generated as structured object trees.
+
+```java
+public static BuildableStatement<ResultStatement> query(boolean returnCount) {
+    var orderLine = Cypher.node("OrderLine").named("ol");
+    var partialStatement = Cypher.match(orderLine)
+        .where(orderLine.property("pickingCompletedWhen").gte(Cypher.parameter("from", from)))
+        .and(orderLine.property("pickingCompletedWhen").lte(Cypher.parameter("to", to)));
+    if (returnCount) return partialStatement.returning(Cypher.count(orderLine));
+    return partialStatement.returning(orderLine);
+}
+```
+This enables compile-time verification of entity property names and syntax checks before execution.
+
+### 3. DeepDiff Integration
+To ensure semantic equivalence, the orchestrator executes both the source query and the translated target query in parallel, serializing the results into canonical JSON format. Because template APIs return standard Java/C# structures, the orchestrator can easily extract metadata (like collections, query filters, sort paths, and counts) and feed them to `DeepDiff` comparison harnesses, adjusting sorting, limits, or parameters dynamically.
+
+---
+
+## NHibernate Mapping-by-Code via ClassMapping
+
+On the C#/.NET side, the orchestrator leverages NHibernate's native **Mapping-by-Code** feature (`ClassMapping<T>`) rather than relying on legacy XML files (`.hbm.xml`) or third-party Fluent NHibernate packages.
+
+This makes the mapping logic completely self-contained in a single C# file, simplifying parsing, code generation, and compilation:
+
+```csharp
+public class CustomerMap : ClassMapping<Customer> {
+    public CustomerMap() {
+        Table("Customers"); Schema("Sales");
+        Id(x => x.CustomerID, m => m.Generator(Generators.Identity));
+        Property(x => x.CustomerName);
+        Property(x => x.AccountOpenedDate);
+        Property(x => x.CreditLimit);
+        Bag(x => x.CustomerTransactions, map => { map.Key(k => k.Column("CustomerID")); map.Inverse(true); }, rel => rel.OneToMany());
+    }
+}
+```
+By mapping schemas programmatically, compilation issues are detected directly by `dotnet build`, avoiding silent configuration failures at database runtime.

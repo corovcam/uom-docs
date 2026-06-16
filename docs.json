@@ -37,14 +37,18 @@
             "group": "Introduction",
             "icon": "rocket",
             "pages": [
-              "index"
+              "index",
+              "roadmap"
             ]
           },
           {
             "group": "User Docs",
             "icon": "book-open",
             "pages": [
-              "user_docs/user_guide"
+              "user_docs/user_guide",
+              "user_docs/design_decisions",
+              "user_docs/prompt_engineering",
+              "user_docs/context_engineering"
             ]
           },
           {

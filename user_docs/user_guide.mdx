@@ -42,11 +42,11 @@ When you open the web application at [https://uom-demo.vercel.app](https://uom-d
 ### 1.2 Conversation Thread Suggestion Cards
 For new sessions, the chat workspace displays four pre-configured translation suggestion cards. Clicking any card loads the corresponding source code inputs into the composer (the input box at the bottom of the screen) and kickstarts a translation run when you click **Send**. The four default cards are:
 1.  **EF Core to Spring Data MongoDB**: Translates Entity Framework Core 10 schema, queries, and configurations to target Spring Data MongoDB 5.0 document models and [MongoTemplate (Criteria/Query)](https://docs.spring.io/spring-data/mongodb/reference/mongodb/template-query-operations.html) queries.
-2.  **EF Core to Spring Data Neo4j**: Translates Entity Framework Core 10 schema, queries, and configurations to Spring Data Neo4j 8.0 nodes and relationship classes with [Neo4jTemplate](https://docs.spring.io/spring-data/neo4j/reference/api/java/org/springframework/data/neo4j/core/Neo4jTemplate.html) (https://neo4j.github.io/cypher-dsl/2025.2.7/) queries.
+2.  **EF Core to Spring Data Neo4j**: Translates Entity Framework Core 10 schema, queries, and configurations to Spring Data Neo4j 8.0 nodes and relationship classes with [Neo4jTemplate](https://docs.spring.io/spring-data/neo4j/reference/api/java/org/springframework/data/neo4j/core/Neo4jTemplate.html) + [Cypher-DSL](https://neo4j.github.io/cypher-dsl/2025.2.7/) queries.
 3.  **Dapper to Spring Data MongoDB**: Translates Dapper SQL schema, queries, and configurations into Spring Data MongoDB document models and MongoTemplate (Criteria/Query) queries.
 4.  **NHibernate to Spring Data MongoDB**: Translates NHibernate schema, queries, and configurations ([Mapping-by-Code mappings](https://notherdev.blogspot.com/2012/02/nhibernates-mapping-by-code-summary.html)) to target Spring Data MongoDB.
 
-See [Design Decisions](./design_decisions.mdx) for the rationale behind these specific framework choices and translation directions.
+See [Design Decisions](./design_decisions) for the rationale behind these specific framework choices and translation directions.
 
 ![Translation Run - Step 2.1: Tool Calls Detailed View](../img/uom-newthreadpage-filled.png "Translation Run - Step 2.1: Tool Calls Detailed View")
 
@@ -167,3 +167,9 @@ When execution is suspended, a warning card is displayed in the chat thread with
         { "resume": "{\"decision\":\"reject\",\"feedback\":\"The OrderItem class was not generated...\"}" }
         ```
         The assistant will ingest your hints, reset the retry counter, and execute a corrected translation loop.
+
+---
+
+## 5. Context and Prompt Engineering for Reliable Translations
+
+The UOM Orchestrator relies heavily on structured context injection and prompt engineering to ensure reliable, compile-error-free translations. You can read more about the dynamic prompt construction strategies in the [Prompt Engineering](./prompt_engineering) and [Context Engineering](./context_engineering) documents, which detail how LLM prompts are dynamically constructed, selected, and injected with framework configurations and few-shot templates to achieve high translation accuracy between different ORM, ODM, and OGM frameworks.

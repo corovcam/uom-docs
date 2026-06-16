@@ -1,0 +1,51 @@
+---
+title: "Context Engineering"
+description: "Details UOM context engineering, ground-truth schema mappings, and project skeleton snippets."
+---
+
+To translate database queries and schemas without compilation errors, the UOM Orchestrator relies on structured, ground-truth context injection. Rather than feeding raw, unguided source code to the LLM, the orchestrator surrounds it with target mappings and project skeleton structures.
+
+The resources for this context reside in `services/orchestrator/src/context/`.
+
+## Ground-Truth Schema Mapping Definitions
+
+To avoid arbitrary naming conventions and incorrect type mappings, the orchestrator references static JSON mapping definitions under `context/mappings/`:
+- **`mappings/mssql_mongodb.json`**: Establishes mapping rules between Relational MSSQL tables/columns and Target MongoDB collections/fields.
+- **`mappings/mssql_neo4j.json`**: Establishes mapping rules between Relational MSSQL tables/columns and Target Neo4j node labels, properties, and relationship directions.
+
+These mapping files act as the ultimate source of truth, instructing the LLM on exactly which properties map to which collection/node attributes.
+
+```json
+{
+  "source_database": "WideWorldImporters",
+  "mappings": [
+    {
+      "source_table": "Sales.Customers",
+      "target_collection": "customers",
+      "fields": {
+        "CustomerID": "customerId",
+        "CustomerName": "customerName",
+        "AccountOpenedDate": "accountOpenedDate",
+        "CreditLimit": "creditLimit"
+      }
+    }
+  ]
+}
+```
+
+---
+
+## Compilation Skeleton Snippets
+
+One of the most common issues with LLM code generation is that models tend to generate incomplete boilerplates (e.g. missing import statements, incorrect namespace formats, or incompatible assembly/maven dependency version definitions).
+
+To prevent this, the orchestrator stores project and harness skeleton templates under `context/snippets/`:
+- **`.csproj` files** (e.g. `efcore-sandbox.csproj`, `dapper-sandbox.csproj`, `nhibernate-sandbox.csproj`): Contains preconfigured target package references (NuGet packages) and C# compilation properties.
+- **`pom.xml` files** (e.g. `mongo-pom.xml`, `neo4j-pom.xml`): Pre-declares all maven dependencies (Spring Boot Data Starters, Jackson serializations, Logging frameworks, etc.).
+- **Validation Entrypoints** (e.g. `EFCoreSchemaValidationEntrypoint.cs`, `MongoQueryEntrypoint.java`): Serve as skeleton code blocks. The orchestrator injects these skeletons so the generated code is compiled within a pre-bootstrapped test context, leaving the LLM to only fill in the translated core logic.
+
+### Key Benefits
+
+1. **Minimizes Dependency Errors**: Pre-configuring all NuGet packages and Maven POM dependencies prevents the LLM from hallucinating package versions.
+2. **Standardized Serialization**: Skeletons define exact serialization settings (e.g. ISO date formatting, decimal formatting up to 3 decimal places), guaranteeing that DeepDiff comparison checks are comparing equivalent data shapes.
+3. **No Boilerplate Generation**: The model does not need to spend time generating boilerplate configuration loaders, database drivers, or test suites, saving thousands of output tokens and keeping attention focused on translation.
