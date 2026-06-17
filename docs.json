@@ -56,6 +56,8 @@
             "directory": "card",
             "icon": "code",
             "pages": [
+              "developer_docs/getting_started",
+              "developer_docs/contribution",
               {
                 "group": "Backend",
                 "expanded": true,
@@ -83,7 +85,8 @@
                 "group": "DevOps",
                 "expanded": true,
                 "pages": [
-                  "developer_docs/devops/devops"
+                  "developer_docs/devops/devops",
+                  "developer_docs/devops/observability"
                 ]
               }
             ]

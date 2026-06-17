@@ -1,0 +1,121 @@
+---
+title: "Observability"
+description: "Tracing and telemetry for the UOM orchestrator: LangSmith for LLM/graph traces, Pydantic Logfire for OpenTelemetry instrumentation, optional Langfuse, and bring-your-own OTEL backend."
+---
+
+A translation run touches many moving parts — multiple LLM calls, MCP database tools, and ephemeral compile sandboxes — and can take [several minutes](/user_docs/prompt_engineering#5-why-it-takes-12-minutes). When something is slow or wrong, you need to see *where*. UOM ships with three complementary, independently-toggleable observability backends, all driven by environment variables.
+
+| Backend | What it captures | Best for |
+| :--- | :--- | :--- |
+| [**LangSmith**](https://docs.smith.langchain.com/) | LangGraph node transitions, each LLM call's prompt/response/tokens, tool calls | Debugging the graph and prompts |
+| [**Pydantic Logfire**](https://logfire.pydantic.dev/docs/) | OpenTelemetry spans for HTTP (httpx/requests/aiohttp) and OpenAI-compatible calls | Latency/error tracing, OTEL pipelines |
+| [**Langfuse**](https://langfuse.com/docs) (optional) | LLM traces, scores, prompt management | Self-hosted LLM analytics |
+
+All three can run at once; they are wired so their own export traffic does not pollute the traces (see [§4](#4-keeping-telemetry-out-of-the-traces)).
+
+---
+
+## 1. LangSmith (LangGraph-native tracing)
+
+LangGraph emits traces to LangSmith automatically when tracing is enabled. Set these in `services/orchestrator/.env` (or `.env.dev`):
+
+```bash
+LANGSMITH_TRACING=true
+LANGSMITH_ENDPOINT=https://eu.api.smith.langchain.com   # use the EU or US endpoint
+LANGSMITH_API_KEY=<your-langsmith-key>
+LANGSMITH_PROJECT="LLM orchestrator service"
+```
+
+Once set, every run of the `universal-object-mapping-translator` graph appears in your LangSmith project as a trace tree: `extract_input → schema_inspection → generate_translation_node → validate_* → evaluation_node`, with each node's inputs, outputs, token counts, and latency. This is the primary tool for **prompt debugging** and for spotting which stage dominates a run's wall-clock time.
+
+<Tip>
+During local development, the `langgraph dev` server opens the LangSmith **Agent Studio** automatically at startup, letting you inspect and replay traces interactively without leaving your machine.
+</Tip>
+
+---
+
+## 2. Pydantic Logfire (OpenTelemetry)
+
+[Logfire](https://logfire.pydantic.dev/docs/) is configured and **active by default** in `react_agent/graph.py`. It instruments the HTTP clients and the OpenAI-compatible SDK so every outbound model/MCP/sandbox call becomes an OpenTelemetry span:
+
+```python
+logfire.configure(console=False, scrubbing=False)
+logfire.instrument_openai(suppress_other_instrumentation=False)
+logfire.instrument_requests(capture_all=True)
+logfire.instrument_httpx(capture_all=True)
+logfire.instrument_aiohttp_client(capture_all=True)
+```
+
+Provide a token to ship spans to Logfire's backend:
+
+```bash
+LOGFIRE_TOKEN=<your-logfire-token>
+LOGFIRE_PYDANTIC_PLUGIN_RECORD=failure   # record Pydantic validation only on failure
+```
+
+Because Logfire speaks **OpenTelemetry**, you are not locked into Pydantic's hosted backend. Point the standard `OTEL_EXPORTER_OTLP_*` environment variables at any OTLP-compatible collector (Grafana Tempo, Honeycomb, Jaeger, your own OpenTelemetry Collector) to keep telemetry in your own infrastructure.
+
+The repo also sets OTEL resource attributes so traces are tagged with the source revision:
+
+```bash
+OTEL_RESOURCE_ATTRIBUTES=vcs.repository.url.full=https://github.com/corovcam/Universal-Object-Mapping
+OTEL_RESOURCE_ATTRIBUTES=${OTEL_RESOURCE_ATTRIBUTES},vcs.repository.ref.revision=main
+OTEL_RESOURCE_ATTRIBUTES=${OTEL_RESOURCE_ATTRIBUTES},vcs.root.path=services/orchestrator
+```
+
+Daytona sandbox telemetry can be forwarded too, via `DAYTONA_OTEL_ENABLED=true` / `DAYTONA_EXPERIMENTAL_OTEL_ENABLED=true`.
+
+---
+
+## 3. Langfuse (optional)
+
+[Langfuse](https://langfuse.com/docs) support is available (the `langfuse` dependency is installed) but its LangChain `CallbackHandler` is **commented out by default** in `graph.py`. To enable it, supply credentials and uncomment the handler wiring:
+
+```bash
+LANGFUSE_PUBLIC_KEY=<pk-...>
+LANGFUSE_SECRET_KEY=<sk-...>
+LANGFUSE_BASE_URL=https://cloud.langfuse.com   # or your self-hosted URL
+```
+
+Use Langfuse if you want self-hosted LLM analytics, scoring, or prompt management alongside (or instead of) LangSmith.
+
+---
+
+## 4. Keeping Telemetry Out of the Traces
+
+A subtle but important detail: the tracing backends themselves make HTTP calls (to upload spans). Without care, Logfire's httpx instrumentation would trace Langfuse's and LangSmith's own uploads, creating noisy, recursive spans. UOM excludes those URLs from instrumentation:
+
+```bash
+OTEL_PYTHON_HTTPX_EXCLUDED_URLS="^.*(langfuse|smith\.langchain\.com).*$"
+OTEL_PYTHON_REQUESTS_EXCLUDED_URLS="^.*(langfuse|smith\.langchain\.com).*$"
+```
+
+Keep these in sync if you add another exporter whose upload endpoint you do not want traced.
+
+---
+
+## 5. Bring Your Own Backend — Checklist
+
+1. **Just want graph/prompt traces?** Set the four `LANGSMITH_*` vars. Nothing else required.
+2. **Want OTEL spans in your own collector?** Set `LOGFIRE_TOKEN` (or configure a bare OTLP exporter) and the `OTEL_EXPORTER_OTLP_ENDPOINT`. Logfire is already instrumenting the code.
+3. **Want self-hosted LLM analytics?** Add the `LANGFUSE_*` vars and uncomment the handler in `graph.py`.
+4. **Add a new excluded URL** to the `OTEL_PYTHON_*_EXCLUDED_URLS` regexes whenever you add an exporter, so its upload traffic does not get traced.
+
+---
+
+## 6. Related Reading
+
+<CardGroup cols={2}>
+  <Card title="DevOps & Deployment" icon="server" href="/developer_docs/devops/devops">
+    Compose profiles, env configuration, and production operations.
+  </Card>
+  <Card title="Getting Started" icon="rocket" href="/developer_docs/getting_started">
+    Boot the stack and enable request mocking for local dev.
+  </Card>
+  <Card title="Architecture" icon="diagram-project" href="/developer_docs/backend/architecture">
+    The graph whose spans you are tracing.
+  </Card>
+  <Card title="Why runs are slow" icon="clock" href="/user_docs/prompt_engineering#5-why-it-takes-12-minutes">
+    Use traces to confirm where the ~12 minutes go.
+  </Card>
+</CardGroup>

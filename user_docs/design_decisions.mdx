@@ -1,66 +1,163 @@
 ---
 title: "Design Decisions"
-description: "An in-depth look at the rationale behind our architectural and design choices for the Universal Object Mapping (UOM) project, including framework selections and translation directions."
+description: "An in-depth, plain-language look at the rationale behind UOM's architectural and design choices: which frameworks and translation pairs were chosen, why programmatic Template APIs were preferred over Repositories, and why you can trust the generated translations."
 ---
 
-During the architecture phase of the Universal Object Mapping (UOM) project, a key decision was made to prefer programmatic template APIs over standard Spring Data / .NET Repository abstractions. This document outlines the rationale behind this design.
+This page explains **why the Universal Object Mapping (UOM) Assistant is built the way it is** — the frameworks it targets, the exact translation directions it supports, the APIs it generates, and, most importantly, **why you can trust the output it produces.**
 
-## Template APIs vs. Repository Patterns
+If you only read one section, read [Why You Can Trust the Translation](#7-why-you-can-trust-the-translation). Everything else explains the engineering that makes that trust justified.
 
-Standard Repository interfaces (such as Spring Data `MongoRepository` or `Neo4jRepository`) rely heavily on classpath scanning, annotation-driven bootstrapping, and complex runtime proxy generation. In a lightweight validation sandbox environment, bootstrapping a full Spring `ApplicationContext` is slow, memory-intensive, and often impossible without complete application context setup.
-
-Instead, the UOM orchestrator targets programmatic template APIs:
-- **Spring Data MongoDB**: `MongoTemplate` and the `Criteria` / `Query` APIs.
-- **Spring Data Neo4j**: `Neo4jTemplate` and the programmatic `Cypher-DSL` builders.
-
-### Rationale & Key Benefits
-
-### 1. Compile-Time Sandbox Validation
-By using template APIs, query translations can be compiled and verified inside lightweight Java class wrappers with standard main entry points. They do not require a booted Spring Container.
-For example, a query validation harness for MongoDB is completely self-contained:
-
-```java
-final class Query1 {
-    public static Query query() {
-        LocalDate from = LocalDate.of(2014, 12, 20);
-        LocalDate to = LocalDate.of(2014, 12, 31);
-        return new Query(Criteria.where("pickingCompletedWhen").gte(from).lte(to));
-    }
-
-    public static Map<String, Object> harness(MongoTemplate template) {
-        Query q = query();
-        long count = template.count(q, OrderLine.class);
-        // ... (sorting, limit logic, and sample retrieval)
-        return Map.of("mongoQuery", Map.of("collection", template.getCollectionName(OrderLine.class), "filter", q.getQueryObject()), "count", count);
-    }
-}
-```
-
-### 2. Cypher-DSL for Spring Data Neo4j
-Direct string concatenation of Cypher queries is highly prone to injection, formatting issues, and syntactic errors. By mandating the use of Spring Data Neo4j's programmatic Cypher-DSL, queries are generated as structured object trees.
-
-```java
-public static BuildableStatement<ResultStatement> query(boolean returnCount) {
-    var orderLine = Cypher.node("OrderLine").named("ol");
-    var partialStatement = Cypher.match(orderLine)
-        .where(orderLine.property("pickingCompletedWhen").gte(Cypher.parameter("from", from)))
-        .and(orderLine.property("pickingCompletedWhen").lte(Cypher.parameter("to", to)));
-    if (returnCount) return partialStatement.returning(Cypher.count(orderLine));
-    return partialStatement.returning(orderLine);
-}
-```
-This enables compile-time verification of entity property names and syntax checks before execution.
-
-### 3. DeepDiff Integration
-To ensure semantic equivalence, the orchestrator executes both the source query and the translated target query in parallel, serializing the results into canonical JSON format. Because template APIs return standard Java/C# structures, the orchestrator can easily extract metadata (like collections, query filters, sort paths, and counts) and feed them to `DeepDiff` comparison harnesses, adjusting sorting, limits, or parameters dynamically.
+<Note>
+New to the project? Start with the [User Guide](./user_guide), then read [Prompt Engineering](./prompt_engineering) and [Context Engineering](./context_engineering) for how the LLM is steered. This page is the "why", those two are the "how".
+</Note>
 
 ---
 
-## NHibernate Mapping-by-Code via ClassMapping
+## 1. The Problem UOM Solves
 
-On the C#/.NET side, the orchestrator leverages NHibernate's native **Mapping-by-Code** feature (`ClassMapping<T>`) rather than relying on legacy XML files (`.hbm.xml`) or third-party Fluent NHibernate packages.
+Migrating a data-access layer from one ecosystem to another (for example, from a relational .NET stack to a document or graph Java stack) is normally a slow, error-prone, manual job. Two things make it hard:
 
-This makes the mapping logic completely self-contained in a single C# file, simplifying parsing, code generation, and compilation:
+1. **Schema translation** — a SQL table with foreign keys does not map one-to-one onto a MongoDB document (which prefers *embedding* related data) or a Neo4j graph (which prefers *relationships* between nodes).
+2. **Query translation** — a LINQ/SQL/HQL query must be rewritten into an equivalent MongoDB or Cypher query that returns the **same data**, not just code that compiles.
+
+Generic "ask an LLM to convert this code" approaches fail because they (a) hallucinate APIs and package versions, (b) silently change query semantics, and (c) cannot tell you whether the result is actually correct. UOM is engineered specifically to remove all three failure modes.
+
+---
+
+## 2. Why These Frameworks and These Translation Pairs
+
+### 2.1 Source frameworks (.NET / relational)
+
+UOM ingests schema and query code from the three dominant .NET data-access frameworks, each representing a different *style* of data access:
+
+| Source framework | Style | Why it was chosen |
+| :--- | :--- | :--- |
+| [Entity Framework Core](https://learn.microsoft.com/en-us/ef/core/) | Full ORM, LINQ-based | The de-facto standard ORM for modern .NET; LINQ queries are expression trees that translate cleanly. |
+| [Dapper](https://github.com/DapperLib/Dapper) | Micro-ORM, raw SQL | Represents the "thin, hand-written SQL" camp; tests UOM against literal SQL strings. |
+| [NHibernate](https://nhibernate.info/) | Mature ORM, HQL | Represents the legacy enterprise ORM; uses HQL and a distinct mapping model (see [§5](#5-nhibernate-mapping-by-code)). |
+
+Covering all three proves the pipeline is **not over-fit to a single query dialect**: it handles LINQ expression trees, raw parameterised SQL, and HQL alike.
+
+### 2.2 Target frameworks (Java / NoSQL)
+
+| Target framework | Paradigm | Why it was chosen |
+| :--- | :--- | :--- |
+| [Spring Data MongoDB](https://spring.io/projects/spring-data-mongodb/) | Document (ODM) | The most widely used document store; the embedding model is the canonical "hard" relational→NoSQL case. |
+| [Spring Data Neo4j](https://spring.io/projects/spring-data-neo4j/) | Graph (OGM) | The leading property-graph database; foreign keys become first-class relationships. |
+
+These two cover the two major **non-relational paradigms**. A relational→relational port is comparatively trivial; relational→document and relational→graph are where the genuinely hard, interesting mapping problems live.
+
+### 2.3 Current direction: one-way `.NET → Java Spring Data`
+
+<Note>
+Today the pipeline supports translation **in one direction only**: from a .NET source framework to a Java Spring Data target framework. This is enforced in code — `SourceFramework` contains only the three .NET frameworks and `TargetFramework` only the two Java frameworks (see `services/orchestrator/src/react_agent/constants.py`).
+</Note>
+
+You will notice the system prompts contain few-shot examples that look bidirectional (e.g. NHibernate→Mongo *and* a Mongo source-harness example). That is deliberate: the harness examples teach the model the **shape of a runnable validation program** for every framework, which is reused regardless of direction. Full bidirectional translation (`Java → .NET`) is on the [roadmap](/roadmap).
+
+The four ready-made cards in the UI map directly onto the supported pairs:
+
+1. **EF Core → Spring Data MongoDB**
+2. **EF Core → Spring Data Neo4j**
+3. **Dapper → Spring Data MongoDB**
+4. **NHibernate → Spring Data MongoDB**
+
+### 2.4 Newest framework versions, pinned exactly
+
+UOM does **not** translate to "MongoDB in general" — it translates to a *specific, current* stack, and it tells the model exactly which one. The pinned versions live in the sandbox project files under `services/orchestrator/src/context/snippets/`:
+
+| Stack | Pinned in | Key versions |
+| :--- | :--- | :--- |
+| EF Core sandbox | `efcore-sandbox.csproj` | .NET 10, `Microsoft.EntityFrameworkCore.SqlServer` 10.0.7, `Microsoft.Data.SqlClient` 7.0.1 |
+| Dapper sandbox | `dapper-sandbox.csproj` | .NET 10, `Dapper` 2.1.66 |
+| NHibernate sandbox | `nhibernate-sandbox.csproj` | .NET 10, `NHibernate` 5.5.2 |
+| MongoDB sandbox | `mongo-pom.xml` | Spring Boot 4.0.3, Java 25, `spring-boot-starter-data-mongodb` |
+| Neo4j sandbox | `neo4j-pom.xml` | Spring Boot 4.0.3, Java 25, `spring-boot-starter-data-neo4j` (Cypher-DSL pulled transitively) |
+
+Because the **exact `.csproj` / `pom.xml` is injected into the prompt** *and* is the same file used to compile the validation sandbox, the model generates code for precisely the API surface it will be compiled against. This is the single biggest reason the output rarely uses hallucinated or deprecated APIs — see [Context Engineering](./context_engineering) for the mechanism.
+
+---
+
+## 3. Template APIs vs. Repository Patterns
+
+A foundational decision: UOM generates **programmatic Template APIs**, never Spring Data `Repository` interfaces.
+
+- **Spring Data MongoDB** → [`MongoTemplate`](https://docs.spring.io/spring-data/mongodb/reference/mongodb/template-query-operations.html) with the [`Criteria` / `Query`](https://docs.spring.io/spring-data/mongodb/reference/mongodb/template-query-operations.html) API.
+- **Spring Data Neo4j** → [`Neo4jTemplate`](https://docs.spring.io/spring-data/neo4j/reference/) with the programmatic [Cypher-DSL](https://neo4j.github.io/cypher-dsl/) `Statement` builders.
+
+### 3.1 Why not `MongoRepository` / `Neo4jRepository`?
+
+Repository interfaces (e.g. `interface OrderRepo extends MongoRepository<Order, String>`) look convenient, but they are the **wrong tool for an automated, verifiable pipeline**:
+
+1. **They need a booted Spring container.** Repositories are runtime proxies created by classpath scanning, annotation processing, and `ApplicationContext` bootstrapping. Spinning up a full Spring context inside a throwaway validation sandbox is slow, memory-heavy, and fragile.
+2. **Derived-query methods hide logic in method names.** `findByPickingCompletedWhenBetween(...)` encodes the query in a *string parsed at runtime*. The compiler cannot verify it; a typo surfaces only when the app runs against a live database. That defeats the entire point of compile-time validation.
+3. **They are hard to introspect.** UOM needs to extract the *concrete query object* (the Mongo filter document / the Cypher statement) to run it and compare results. A repository proxy gives you results, not an inspectable query plan.
+
+`MongoTemplate` and `Neo4jTemplate`, by contrast, are plain objects you instantiate directly. The generated query is an ordinary Java value (`Query` / `Statement`) that compiles in a bare `main()`, can be executed against the live database, and can be serialised for equivalence checking.
+
+### 3.2 What a generated MongoDB query looks like
+
+```java
+class OrderLineQuery {
+   private final MongoTemplate mongoTemplate;
+
+   OrderLineQuery(MongoTemplate mongoTemplate) {
+      this.mongoTemplate = mongoTemplate;
+   }
+
+   List<OrderLine> query1() {
+      Date from = new Date(2014, 12, 20);
+      Date to = new Date(2014, 12, 31);
+      Query query = Query.query(Criteria.where("pickingCompletedWhen").gte(from).lte(to));
+      return mongoTemplate.find(query, OrderLine.class);
+   }
+}
+```
+
+This is a faithful translation of an EF Core `Where(ol => ol.PickingCompletedWhen >= from && ... <= to)` LINQ query — same intent, same field, no booted container required.
+
+### 3.3 Cypher-DSL for Spring Data Neo4j
+
+For Neo4j, UOM mandates the **programmatic Cypher-DSL**, not raw string concatenation. String-built Cypher is injection-prone, easy to misformat, and invisible to the compiler. The Cypher-DSL builds the query as a typed object tree:
+
+```java
+var person = Cypher.node("Person").named("p");
+var sortProperty = person.property(sortByField);
+Statement statement = Cypher.match(person)
+         .returning(person)
+         .orderBy(ascending ? sortProperty.ascending() : sortProperty.descending())
+         .limit(Cypher.literalOf(1))
+         .build();
+```
+
+Property names, ordering, and structure are all checked at compile time before a single query reaches the database.
+
+### 3.4 The payoff: everything is compile-checkable and runnable
+
+Because both targets emit Template-API code with explicit entry points, every translation can be:
+
+1. **Compiled** in a lightweight sandbox (`mvn compile` / `dotnet build`) — see [Validators & Equivalence](/developer_docs/backend/validators_and_equivalence).
+2. **Executed** against the real database to produce a result sample.
+3. **Compared** field-by-field against the source query's result via DeepDiff.
+
+A Repository-based design would make steps 1–3 dramatically harder. This single choice is what unlocks UOM's correctness guarantees.
+
+---
+
+## 4. Why a Validation Harness Is Generated Alongside the Query
+
+For every query translation the model emits **two** artifacts, kept strictly separate:
+
+- `translated_query_code` — the clean, production query you actually want.
+- `*_validation_harness_code` — a self-contained runnable program (with a declared entry-point class/method) that executes the query, captures `count` / `firstSample` / `lastSample`, and writes them as JSON.
+
+Keeping the harness separate means the production code you receive is **not polluted** with sorting, limits, counting, or JSON-serialisation scaffolding that exists only to make validation deterministic. The harness is the throwaway test rig; the query is the deliverable. (See [State & Context](/developer_docs/backend/state_and_context) for how these fields flow through the graph.)
+
+---
+
+## 5. NHibernate Mapping-by-Code
+
+On the .NET side, UOM uses NHibernate's native **[Mapping-by-Code](https://nhibernate.info/doc/nhibernate-reference/mapping.html)** (`ClassMapping<T>`) rather than legacy `.hbm.xml` files or the third-party Fluent NHibernate package.
 
 ```csharp
 public class CustomerMap : ClassMapping<Customer> {
@@ -68,10 +165,62 @@ public class CustomerMap : ClassMapping<Customer> {
         Table("Customers"); Schema("Sales");
         Id(x => x.CustomerID, m => m.Generator(Generators.Identity));
         Property(x => x.CustomerName);
-        Property(x => x.AccountOpenedDate);
-        Property(x => x.CreditLimit);
-        Bag(x => x.CustomerTransactions, map => { map.Key(k => k.Column("CustomerID")); map.Inverse(true); }, rel => rel.OneToMany());
+        Bag(x => x.CustomerTransactions, map => {
+            map.Key(k => k.Column("CustomerID"));
+            map.Inverse(true);
+        }, rel => rel.OneToMany());
     }
 }
 ```
-By mapping schemas programmatically, compilation issues are detected directly by `dotnet build`, avoiding silent configuration failures at database runtime.
+
+Why Mapping-by-Code:
+
+- **Self-contained in one C# file** — no external XML to parse, generate, or keep in sync, which keeps both code generation and compilation simple.
+- **Compile-checked** — mapping mistakes surface from `dotnet build`, not as silent runtime configuration failures.
+- **First-party** — `ClassMapping<T>` ships with NHibernate itself, so no extra dependency (unlike Fluent NHibernate).
+
+---
+
+## 6. Determinism by Design
+
+UOM is built around a **deterministic LangGraph state machine**, not a free-roaming "agent that decides when it's done." The earlier ReAct-agent approach is deprecated. The reasons, in brief:
+
+- **Explicit validation gates**: compile → execute → DeepDiff → LLM judge. A translation cannot be returned unless it passes the gates appropriate to its type.
+- **Bounded retries**: at most `MAX_TRANSLATION_LOOPS = 3` correction loops before handing off to a human, so the pipeline never spins forever.
+- **Temperature 0** on every generation/evaluation model, so the same input yields the same output.
+
+Full architecture, node-by-node, is in [Architecture & LangGraph Design](/developer_docs/backend/architecture). The reasoning for temperature 0 and the self-repair loop is in [Prompt Engineering](./prompt_engineering).
+
+---
+
+## 7. Why You Can Trust the Translation
+
+This is the heart of the project. UOM does **not** ask you to trust the LLM. It asks you to trust a pipeline that *checks the LLM*. A translation is only presented to you after surviving four independent layers of verification:
+
+<Steps>
+  <Step title="Grounded generation (no guessing)">
+    The model is given the **exact source schema, the exact target `.csproj`/`pom.xml`, ground-truth database mappings, and verified few-shot harness examples** before it writes a line. It is generating against a known, pinned API surface — not its training-data memory. See [Context Engineering](./context_engineering).
+  </Step>
+  <Step title="It must compile (syntactic correctness)">
+    The translated schema and query are compiled in an isolated [Daytona](https://www.daytona.io/docs/) sandbox with the real SDKs (.NET 10, Java 25). Code that does not build is rejected and sent back for repair — you never receive non-compiling output silently.
+  </Step>
+  <Step title="It must return the same data (semantic correctness)">
+    The source query and the translated query are **both executed against live databases**, and their result sets (`count`, first row, last row) are compared with [DeepDiff](https://zepworks.com/deepdiff/current/index.html). Tolerances handle harmless differences (field ordering, float precision, reversed sort order). If the data differs, the translation is rejected — see [Validators & Equivalence](/developer_docs/backend/validators_and_equivalence).
+  </Step>
+  <Step title="An independent LLM judge signs off">
+    A separate evaluation model reviews the compiler output and the DeepDiff result and issues a structured `ACCEPT` / `REJECT`. Only `ACCEPT` ends the run successfully.
+  </Step>
+</Steps>
+
+If all four layers cannot be satisfied within three automatic attempts, the pipeline **stops and asks you** (human-in-the-loop) rather than returning a result it could not verify. In other words: **a translation you receive has compiled with the real toolchain and produced byte-for-byte equivalent data against a real database.** That is a far stronger guarantee than "an LLM said it looks right."
+
+---
+
+## 8. Acknowledgements & Lineage
+
+UOM extends **ORMorpher**, originally developed by Milan Abrahám (Master's thesis, later published at *IEEE/ACM ASE 2025*). ORMorpher used Roslyn-based compiler heuristics and Integer Linear Programming to select optimal *.NET* frameworks. UOM generalises this to **cross-paradigm** (relational → document/graph) translation by replacing rigid rules with an iterative, validated LLM pipeline.
+
+- ORMorpher thesis: [Framework-Agnostic Query Adaptation](http://hdl.handle.net/20.500.11956/203083)
+- ORMorpher source: [github.com/milan252525/orm-convertor](https://github.com/milan252525/orm-convertor)
+
+Developed within the **Adaptive Data Management (ADaM)** research group, Department of Software Engineering, Charles University (Faculty of Mathematics and Physics).

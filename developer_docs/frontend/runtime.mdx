@@ -28,7 +28,10 @@ const configurable: UomConfig = savedConfig ? JSON.parse(savedConfig) : {};
 
 const payload = {
     input: messages.length ? { messages } : null,
-    streamMode: ["messages-tuple", "values", "custom"],
+    // "updates" is required for human-in-the-loop: @assistant-ui/react-langgraph only
+    // captures LangGraph's native `interrupt()` payload from `updates` events (it reads
+    // `chunk.data.__interrupt__`). Without it the suspension is never surfaced live.
+    streamMode: ["messages-tuple", "updates", "values", "custom"],
     streamSubgraphs: true,
     ...(config.abortSignal != null && { signal: config.abortSignal }),
     onDisconnect: "cancel",
@@ -60,7 +63,7 @@ const eventStream = await client.runs.stream(externalId, ASSISTANT_ID, payload);
 
 Some payload parameters, come directly from `assistant-ui` runtime, which are passed through the `config` argument of the `stream` method:
 *   `abortSignal`: An `AbortController` signal that can be triggered to cancel the stream.
-*   `command`: An optional string command, use for example in the `InterruptHandler` component to send resume commands back to the LangGraph.
+*   `command`: An optional command object (e.g. `{ resume: ... }`), used by the `InterruptHandler` component to resume a suspended graph. Its `resume` value is forwarded verbatim to the backend `interrupt()` call (see [§6](#6-interrupt--user-decision-flow-interrupthandler)).
 *   `checkpointId`: An optional string identifier for resuming from a specific checkpoint in the thread history.
 
 ### 2.1 LLM Backend Switcher
@@ -154,31 +157,71 @@ The frontend maps UI actions (like creating or deleting threads) to the backend 
 *   **File Path**: [`frontend/uom-translator-ui/components/assistant-ui/interrupt-handler.tsx`](../../frontend/uom-translator-ui/components/assistant-ui/interrupt-handler.tsx)
 *   **Component**: `InterruptHandler`
 
-When the orchestrator reaches a manual validation gate, it suspends execution and returns validation errors and query equivalence reports. The `InterruptHandler` renders these details to the user and displays action buttons.
+When the orchestrator reaches a manual validation gate, the backend `human_intervention_node` suspends execution using LangGraph's **native `interrupt()` API** (not a tool call). The interrupt payload carries an `instruction` plus the current translation `state`:
+
+```python
+# services/orchestrator/src/react_agent/graph.py — human_intervention_node
+response = interrupt({
+    "instruction": "Review the current state, generated translation and validation results...",
+    "state": {
+        "translated_query_code": state.translated_query_code,
+        "translated_schema_code": state.translated_schema_code,
+        "explanation_message": state.explanation_message,
+        "query_equivalence_deep_diffs": state.query_equivalence_deep_diffs,
+    },
+})
+output = HumanInterventionResponse.model_validate(response)  # { decision, feedback }
+```
+
+The `InterruptHandler` reads this payload, renders the explanation and the query-equivalence deep diffs, and presents the Accept / Reject decision controls.
 
 ### 6.1 State Transitions during Suspends
 ```mermaid
 stateDiagram-v2
-    [*] --> Suspended: Graph reaches human_intervention_node
-    Suspended --> RenderErrors: Extract errors & DeepDiff payload
-    RenderErrors --> AcceptSelection: User clicks "Accept & Save"
-    RenderErrors --> RejectSelection: User clicks "Reject & Correct"
-    
-    AcceptSelection --> ResumeGraph: Send resume: "accept"
+    [*] --> Suspended: Graph reaches human_intervention_node (interrupt())
+    Suspended --> RenderCard: Read interrupt.value { instruction, state }
+    RenderCard --> AcceptSelection: User clicks "Accept & Save"
+    RenderCard --> RejectSelection: User clicks "Reject & Correct"
+
+    AcceptSelection --> ResumeGraph: resume = { decision: "accept", feedback: "" }
     RejectSelection --> InputFeedback: Show textarea for correction hints
-    InputFeedback --> ResumeGraph: Send resume: JSON({decision: "reject", feedback})
-    
-    ResumeGraph --> [*]: Pipeline resumes execution
+    InputFeedback --> ResumeGraph: resume = { decision: "reject", feedback }
+
+    ResumeGraph --> [*]: Command(resume) returned from interrupt()
 ```
 
 The component uses hooks from `@assistant-ui/react-langgraph` to resume the graph:
-*   `useLangGraphInterruptState()`: Accesses the active suspend payload, checking if `resumable` is true.
-*   `useLangGraphSendCommand()`: Resumes execution by posting a control decision payload back to the LangGraph node:
-    *   **Accept**: Sends `{ resume: "accept" }`, directing the orchestrator to skip validation and proceed.
-    *   **Reject & Correct**: Opens a text area for correction instructions, sending a JSON payload containing the user's feedback to guide the next generation loop:
-        ```typescript
-        const resume = JSON.stringify({ decision: "reject", feedback });
-        await sendCommand({ resume });
-        ```
+*   `useLangGraphInterruptState()`: Accesses the active suspend payload via `interrupt.value`. The card renders whenever a payload is present.
 
-For more information on interrupt handling and human-in-the-loop patterns, see the [LangGraph Interrupts Documentation](https://docs.langchain.com/oss/python/langgraph/interrupts).
+    > **Do not gate on `interrupt.resumable`.** That field is **deprecated** in `@langchain/langgraph-sdk` (≥ 1.x) and omitted by recent servers, so guarding on it hides the card entirely (both live and on reload).
+
+*   `useLangGraphSendCommand()`: Resumes execution by posting the decision object back to the suspended node. The value becomes the return value of the backend `interrupt()` call and is validated against the `HumanInterventionResponse` Pydantic model, so **both fields are required** and it must be an **object** — not a bare string or a JSON-encoded string:
+    ```typescript
+    const resume =
+        decision === "accept"
+            ? { decision: "accept", feedback: "" }
+            : { decision: "reject", feedback };
+    // LangGraphCommand.resume is typed as `string` upstream, but the value is forwarded
+    // verbatim to the server; cast past the narrow type.
+    await sendCommand({ resume: resume as unknown as string });
+    ```
+
+### 6.2 Persistence across reloads
+
+Because the backend uses a native `interrupt()`, the suspension is part of the thread's server-side checkpoint. The runtime's `load()` callback returns it so the card reappears when an interrupted conversation is reopened from the thread list:
+
+```typescript
+load: async (externalId) => {
+    const state = await client.threads.getState(externalId, undefined, { subgraphs: true });
+    return {
+        messages: state.values?.messages || [],
+        // Collect pending interrupts across all tasks; the runtime feeds interrupts[0]
+        // into useLangGraphInterruptState().
+        interrupts: (state.tasks ?? []).flatMap((task) => task.interrupts ?? []),
+    };
+}
+```
+
+> **Why native `interrupt()` rather than the tool-message approval pattern?** The assistant-ui [Approval UI tutorial](https://www.assistant-ui.com/docs/runtimes/langgraph/tutorial/part-3) resumes by appending a `ToolMessage` (via `addResult`) to a *pending tool call*. That mechanism is incompatible with `interrupt()` + `Command(resume)`: `addResult` sends new input rather than a resume command, and it would require the backend graph to be rebuilt around a pending tool call. The native interrupt keeps the human-in-the-loop gate as a first-class checkpoint that persists and restores cleanly.
+
+For more information on interrupt handling and human-in-the-loop patterns, see the [LangGraph Interrupts Documentation](https://docs.langchain.com/oss/python/langgraph/interrupts) and the [assistant-ui LangGraph Interrupts guide](https://www.assistant-ui.com/docs/runtimes/langgraph/interrupts).

@@ -1,0 +1,141 @@
+---
+title: "Contribution Guide"
+description: "How to extend the UOM LangGraph backend — most importantly, how to add a new source or target framework by editing enums, dropping in context files, and updating prompts."
+---
+
+This guide covers the two most common contributions: **adding a new framework** to the translation matrix, and **extending the LangGraph backend** with new nodes or tools. Read [Architecture](/developer_docs/backend/architecture), [Context Engineering](/user_docs/context_engineering), and [Prompt Engineering](/user_docs/prompt_engineering) first — extending UOM means touching all three layers.
+
+<Note>
+Source lives in [`services/orchestrator/src/react_agent/`](/backend_code_reference/react_agent/index). Code-reference pages exist for every module mentioned below; links are provided inline.
+</Note>
+
+---
+
+## 1. Mental Model: A Framework Is Data, Not Code
+
+Adding a framework is intentionally **mostly declarative**. The pipeline logic does not care whether it is translating EF Core or some new ORM — it reads framework-specific behaviour from:
+
+1. **Enums + lookup tables** in [`constants.py`](/backend_code_reference/react_agent/constants) (what the framework is, what language it compiles to, which files describe it).
+2. **Context files** in `context/snippets/` and `context/mappings/` (the ground-truth config, harness skeletons, and DB mappings — see [Context Engineering](/user_docs/context_engineering)).
+3. **Few-shot examples + harness rules** in [`prompts.py`](/backend_code_reference/react_agent/prompts).
+
+Get those three right and the existing graph, validators, and sandboxes pick the new framework up automatically.
+
+---
+
+## 2. Adding a New Framework — Step by Step
+
+Suppose you are adding a new **source** framework. The same steps apply to a target (swap `SourceFramework` for `TargetFramework`, and add Java-side rather than .NET-side context).
+
+### Step 1 — Register the enum and lookup tables
+
+In `react_agent/constants.py`:
+
+```python
+class FrameworkEnum(str, Enum):
+    ...
+    DOTNET_LINQ2DB = ".NET LINQ to DB"   # 1. add the canonical name
+
+class SourceFramework(str, Enum):        # 2. add to source OR target set
+    ...
+    DOTNET_LINQ2DB = FrameworkEnum.DOTNET_LINQ2DB.value
+```
+
+Then add an entry to **every** lookup dict so the rest of the system can resolve it:
+
+| Dict | Purpose |
+| :--- | :--- |
+| `FRAMEWORK_TO_NORMALIZED_NAME` / `NORMALIZED_FRAMEWORK_TO_FRAMEWORK` | snake_case ⇄ enum, used for JSON keys and prompts. |
+| `FRAMEWORK_TO_LANGUAGE_TYPE` | `CSHARP` or `JAVA` — drives which validator/sandbox is used. |
+| `FRAMEWORK_TO_CONFIG_FILES` | the `.csproj` / `pom.xml` to inject and compile with. |
+| `FRAMEWORK_TO_SNIPPET_FILES` | the `(schema_entrypoint, query_entrypoint)` files. |
+
+Also add it to `DotnetFramework` or `JavaFramework` so the validation router (`prep_query_validation` in [`graph.py`](/backend_code_reference/react_agent/graph)) sends it to the correct sandbox.
+
+### Step 2 — Drop in the context files
+
+Add to `services/orchestrator/src/context/snippets/`:
+
+- A **project config** (`linq2db-sandbox.csproj`) pinning the exact dependency versions — this is injected into the prompt *and* used to compile the sandbox, so they can never drift.
+- A **schema validation entrypoint** (`LinqToDbSchemaValidationEntrypoint.cs`) — a runnable program that loads the schema and fetches one row per entity.
+- A **query validation entrypoint** (`LinqToDbQueryEntrypoint.cs`) — a runnable harness that executes the query and serialises `count` / `firstSample` / `lastSample` as JSON, matching the existing entrypoints' output shape so the [DeepDiff equivalence check](/developer_docs/backend/validators_and_equivalence) compares like-for-like.
+
+<Warning>
+The harness **output JSON shape must match** the existing frameworks exactly (`count`, `firstSample`, `lastSample`, same serialization settings — ISO dates, 3-decimal-place numbers). Equivalence checking compares these across the source and target, so an inconsistent shape will cause false rejections.
+</Warning>
+
+If the framework targets a new database, add a mapping file under `context/mappings/` and wire it into `get_database_mapping_json()` in [`utils.py`](/backend_code_reference/react_agent/utils/utils).
+
+### Step 3 — Teach the prompts
+
+In `react_agent/prompts.py`, add to the translation prompt:
+
+- A **few-shot example** showing a representative source→target translation for the new framework.
+- A **harness rule** describing the entrypoint signature and return type (mirror the existing "Source framework harness rules" / "Target framework harness rules" blocks — e.g. *"For LINQ to DB: validation harness returns `IQueryable<T>`. Entrypoint signature: `Build(DataConnection db, bool ascending)`."*).
+
+The configs and entrypoint snippets are injected automatically by `build_system_prompt()` once Step 1 and Step 2 are done — you only hand-write the example and the rule.
+
+### Step 4 — New language? Add a sandbox + validator
+
+If the framework compiles to a language UOM does not yet support (i.e. not C# or Java), you also need:
+
+- A new value in `LanguageType` and `SandboxType` ([`constants.py`](/backend_code_reference/react_agent/constants)) plus a Daytona sandbox image (see [Sandbox Environment](/developer_docs/backend/sandbox_environment)).
+- A new validator tool alongside [`dotnet_validator.py`](/backend_code_reference/react_agent/custom_tools/dotnet_validator) / [`java_validator.py`](/backend_code_reference/react_agent/custom_tools/java_validator), and register it in the `ToolNode`s in `graph.py`.
+
+For a same-language framework (e.g. another .NET ORM), this step is **not needed** — the existing `validate_dotnet_code` tool handles it.
+
+### Step 5 — Surface it in the frontend
+
+Add the framework to the UI's framework enums and, optionally, a new suggestion card. See the [Frontend Components](/developer_docs/frontend/components) reference.
+
+### Checklist
+
+<Steps>
+  <Step title="constants.py">Enum + every lookup dict + Source/Target/Dotnet/Java set.</Step>
+  <Step title="context/snippets/">Config file + schema entrypoint + query entrypoint (matching JSON shape).</Step>
+  <Step title="context/mappings/">New DB mapping (only if a new database).</Step>
+  <Step title="prompts.py">Few-shot example + harness rule.</Step>
+  <Step title="validator + sandbox">Only if a new compile language.</Step>
+  <Step title="frontend">Enum + optional suggestion card.</Step>
+</Steps>
+
+---
+
+## 3. Extending the LangGraph Backend
+
+To add behaviour to the pipeline itself (a new node, tool, or routing rule):
+
+- **New node** — write an `async def my_node(state, config, runtime)` in `graph.py`, return a state-update dict or a `Command`, then `builder.add_node(...)` and wire edges with `builder.add_edge` / `builder.add_conditional_edges`. Follow the existing node docstring style.
+- **New state field** — add it to the appropriate dataclass in [`state.py`](/backend_code_reference/react_agent/state) (`InputState`, `OutputState`, or internal `State`). Use the `translation_messages` channel, not `messages`, for noisy validation chatter — see [State & Context](/developer_docs/backend/state_and_context).
+- **New tool** — add a `@tool`-decorated function under `custom_tools/`, register it in a `ToolNode`, and (if the model should call it) in `TOOLS` in [`tools.py`](/backend_code_reference/react_agent/tools).
+- **New routing rule** — write a function returning a `Literal[...]` of node names and attach with `add_conditional_edges`.
+
+Keep models at `temperature=0` and keep retry budgets bounded (`MAX_*_LOOPS`) so the determinism guarantees described in [Design Decisions](/user_docs/design_decisions#6-determinism-by-design) still hold.
+
+---
+
+## 4. Local Development & Conventions
+
+- Boot the stack and the LangGraph dev server per [Getting Started](/developer_docs/getting_started). Use `make record_requests` to mock LLM calls while iterating.
+- Lint/format with the project's configured [Ruff](https://docs.astral.sh/ruff/) setup (`make` targets in `services/orchestrator/Makefile`).
+- Verify changes with the test suite under `services/orchestrator/tests/`.
+- Confirm new traces look right in [LangSmith / Logfire](/developer_docs/devops/observability).
+
+---
+
+## 5. Related Reading
+
+<CardGroup cols={2}>
+  <Card title="Architecture" icon="diagram-project" href="/developer_docs/backend/architecture">
+    The state machine you are extending.
+  </Card>
+  <Card title="Context Engineering" icon="layer-group" href="/user_docs/context_engineering">
+    How the context files you add are used.
+  </Card>
+  <Card title="Prompt Engineering" icon="wand-magic-sparkles" href="/user_docs/prompt_engineering">
+    How the prompt is assembled from those files.
+  </Card>
+  <Card title="Validators & Equivalence" icon="scale-balanced" href="/developer_docs/backend/validators_and_equivalence">
+    Why your harness output shape must match.
+  </Card>
+</CardGroup>

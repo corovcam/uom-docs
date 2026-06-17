@@ -6,12 +6,20 @@
 function InterruptHandler(): Element | null;
 ```
 
-Defined in: [components/assistant-ui/interrupt-handler.tsx:26](https://github.com/corovcam/Universal-Object-Mapping/blob/main/frontend/uom-translator-ui/components/assistant-ui/interrupt-handler.tsx#L26)
+Defined in: [components/assistant-ui/interrupt-handler.tsx:68](https://github.com/corovcam/Universal-Object-Mapping/blob/main/frontend/uom-translator-ui/components/assistant-ui/interrupt-handler.tsx#L68)
 
-React Component to handle LangGraph Suspended state.
-Intercepts human-in-the-loop validation checkpoints when the orchestrator
-hits compiler failures or equivalence warnings, rendering the errors and
-providing buttons to Accept or Reject & Correct the translation.
+React Component to handle the LangGraph suspended (interrupted) state.
+
+Intercepts the human-in-the-loop validation checkpoint raised by the backend
+`human_intervention_node` via LangGraph's native `interrupt()` API. The payload
+(instruction + current translation state + query-equivalence deep diffs) is
+surfaced through `useLangGraphInterruptState()`. The user can Accept the
+translation or Reject it with targeted feedback; the decision is resumed back
+into the graph with `Command(resume={ decision, feedback })`.
+
+The interrupt is captured live (requires `"updates"` in the stream's `streamMode`)
+and restored on reload via the runtime's `load()` callback, so the card reappears
+when an interrupted conversation is reopened from the thread list.
 
 #### Returns
 

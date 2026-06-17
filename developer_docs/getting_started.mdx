@@ -1,0 +1,148 @@
+---
+title: "Getting Started"
+description: "Development requirements and a step-by-step quick start for booting the full Universal Object Mapping (UOM) monorepo stack locally, plus production deployment."
+---
+
+This guide takes you from a clean machine to a running UOM stack — databases, MCP adapters, sandboxes, the LangGraph orchestrator, and the Next.js frontend. For *what the system does* and *why it is built this way*, see the [Introduction](/index) and [Design Decisions](/user_docs/design_decisions).
+
+<Note>
+UOM is a monorepo. The commands below assume you are at the repository root unless a `cd` is shown. Source: [github.com/corovcam/Universal-Object-Mapping](https://github.com/corovcam/Universal-Object-Mapping).
+</Note>
+
+---
+
+## 1. Development Requirements
+
+Your host environment must satisfy the following:
+
+| Requirement | Version / Notes |
+| :--- | :--- |
+| **Docker** | Docker Engine 25+ with Docker Compose V2 (runs the relational/NoSQL backends, MCP adapters, and Next.js). |
+| **Python** | 3.11+ (3.13 recommended; 3.14+ currently causes issues), managed via [uv](https://astral.sh/uv/). |
+| **Node.js** | v24, managed with [pnpm](https://pnpm.io/) workspaces (Next.js App Router). |
+| **OS** | Linux or WSL recommended for optimal Docker performance and Daytona sandbox compatibility. |
+| **Daytona** | A local [Daytona](https://www.daytona.io/docs/) server daemon to manage isolated SDK sandbox containers. |
+| **LLM provider** | An OpenAI-compatible endpoint — Metacentrum [e-INFRA CZ](https://docs.cerit.io/en/docs/ai-as-a-service/introduction) vLLM (e.g. Kimi K2.6, GLM-5, DeepSeek V4 Pro), any comparable OpenAI-compatible API, or a local [Ollama](https://ollama.com/) instance (e.g. `qwen3-coder-next`). |
+
+---
+
+## 2. Quick Start
+
+### Step 1 — Configure environment variables
+
+Copy the env templates at the [workspace root](https://github.com/corovcam/Universal-Object-Mapping/blob/main/.env.example), in [`frontend/uom-translator-ui`](https://github.com/corovcam/Universal-Object-Mapping/tree/main/frontend/uom-translator-ui), and in [`services/orchestrator`](https://github.com/corovcam/Universal-Object-Mapping/tree/main/services/orchestrator), then fill in your LLM provider keys and base URLs:
+
+```bash
+cp .env.example .env.dev          # development
+cp .env.example .env              # production
+cp .env.example .env.development  # frontend (development)
+cp .env.example .env.production   # frontend (production)
+```
+
+### Step 2 — Spin up the container stack
+
+Boot the databases, MCP adapters, relational migrator, Daytona stack, and orchestrator backend:
+
+```bash
+./scripts/init-project.sh
+```
+
+Ensure all healthchecks pass. To reset, run `./scripts/destroy-containers.sh`, fix the issue, and retry.
+
+### Step 3 — Configure the databases (ETL)
+
+To validate query translations against real data, the target MongoDB and Neo4j databases must hold a logically equivalent copy of the relational source. This is a **one-time, semi-automatic** ETL step.
+
+<Tabs>
+  <Tab title="MongoDB">
+    Open the [MongoDB Relational Migrator](https://www.mongodb.com/docs/relational-migrator/getting-started/) dashboard at [http://localhost:8091](http://localhost:8091), connect to the SQL Server source, and map the `WideWorldImporters` dataset into MongoDB. A pre-configured mapping lives in `services/etl/mongodb/UOM WideWorldImporters.relmig` (import it in the UI). Or run the script:
+
+    ```bash
+    ./services/etl/mongodb/run_mongodb_etl.sh
+    ```
+  </Tab>
+  <Tab title="Neo4j">
+    Use the [Neo4j ETL Tool](https://neo4j.com/labs/etl-tool/) (UI available only in [Neo4j Desktop v1.6](https://neo4j.com/docs/desktop/1.6/) and older) or the [Neo4j ETL CLI](https://neo4j.com/labs/etl-tool/1.5.0/neo4j-etl/) to map relational tables to graph nodes and foreign keys to relationships:
+
+    ```bash
+    ./services/etl/neo4j/run-neo4j-etl.sh
+    ```
+  </Tab>
+</Tabs>
+
+### Step 4 — Create a Daytona API key
+
+So the orchestrator can provision sandboxes:
+
+1. Open the Daytona dashboard at [http://localhost:3000](http://localhost:3000). Authenticate with the defaults: user `dev@daytona.io`, password `password`.
+2. Go to **API Keys** → **Create Key**. Name it `default`, set **Permissions** to **Full Access**.
+3. Copy the key into `DAYTONA_API_KEY` in both `.env.dev` and `.env` under `services/orchestrator`.
+4. Rebuild the orchestrator service.
+
+See the [Daytona API Keys docs](https://www.daytona.io/docs/en/api-keys/) for details.
+
+### Step 5 — Start the LangGraph server
+
+In a separate terminal:
+
+```bash
+cd services/orchestrator
+direnv allow   # if you use direnv; otherwise load env vars manually
+uv sync --all-extras && ./scripts/load_env.sh && ./scripts/init_daytona_snapshots.sh   # or `make dev`
+langgraph dev --allow-blocking   # or `make dev`
+```
+
+The server listens on [http://localhost:2024](http://localhost:2024) and opens the LangGraph/LangSmith Agent Studio dashboard automatically.
+
+<Tip>
+For development, enable **LLM request mocking** to avoid rate limits and speed up iteration:
+
+```bash
+make record_requests
+```
+
+This records LLM requests/responses to a local fixtures directory; point your `.env.dev` endpoint accordingly. See [Observability](/developer_docs/devops/observability) for tracing setup.
+</Tip>
+
+### Step 6 — Launch the Next.js frontend
+
+In a third terminal:
+
+```bash
+cd frontend/uom-translator-ui
+pnpm install
+pnpm dev:frontend
+```
+
+Open [http://localhost:3001](http://localhost:3001) (port 3001 because the Daytona API already occupies 3000) and start translating. New to the UI? Follow the [User Guide](/user_docs/user_guide).
+
+---
+
+## 3. Production Deployment
+
+Configure all production env files (domains, IPs, networking) and run:
+
+```bash
+./scripts/init-project-prod.sh
+```
+
+For the full production topology — Docker Compose profiles, environment configuration, sandbox timeouts, and init/destroy scripts — see [DevOps & Deployment](/developer_docs/devops/devops).
+
+---
+
+## 4. Where to Go Next
+
+<CardGroup cols={2}>
+  <Card title="User Guide" icon="book-open" href="/user_docs/user_guide">
+    Run your first translation in the web UI.
+  </Card>
+  <Card title="Architecture" icon="diagram-project" href="/developer_docs/backend/architecture">
+    Understand the LangGraph state machine.
+  </Card>
+  <Card title="Contribution Guide" icon="code-pull-request" href="/developer_docs/contribution">
+    Add a new framework or extend the backend.
+  </Card>
+  <Card title="Observability" icon="chart-line" href="/developer_docs/devops/observability">
+    Wire up LangSmith, Logfire, and OpenTelemetry tracing.
+  </Card>
+</CardGroup>

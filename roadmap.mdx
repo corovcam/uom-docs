@@ -1,28 +1,62 @@
 ---
 title: "Future Roadmap"
-description: "Details the planned enhancements and roadmap milestones for the UOM project."
+description: "Planned enhancements for the Universal Object Mapping (UOM) framework: faster sandboxes, smarter context engineering, more translation pairs and frameworks, formal evaluation, and a hardened human-in-the-loop stage."
 ---
 
-This document outlines the planned future milestones and enhancements for the Universal Object Mapping (UOM) framework.
+This document outlines the planned milestones for UOM. They are roughly ordered by impact-to-effort, but priorities shift with research needs.
+
+---
 
 ## 1. Latency Optimization (Sandbox Caching)
-Currently, sandbox compilations run inside isolated, clean Daytona docker containers. Each run resolves dependencies and downloads Maven packages or Nuget components.
-* **Goal**: Pre-bake standard Maven plugins (`.m2` cache) and NuGet dependencies (`.nuget` fallback folders) into the Daytona sandbox image layer.
-* **Impact**: Reduce compile/build validation times from ~3 minutes to under 10 seconds.
 
-## 2. Advanced Context and Prompt Engineering
-As target databases scale, mapping files grow. This can overwhelm the LLM's context window.
-* **Goal**: Implement a Vector-DB retrieval mechanism (using Postgres vector extensions) to dynamically query and inject only the relevant schema mappings.
-* **Impact**: Support large schemas with thousands of tables/entities without hitting context limits or inflating token costs.
+Today each validation runs inside a clean [Daytona](https://www.daytona.io/docs/) container that resolves dependencies and downloads Maven/NuGet packages from scratch — a large part of the [~12-minute](/user_docs/prompt_engineering#5-why-it-takes-12-minutes) run time.
 
-## 3. Expanding Translation Support
-* **Goal**: Support additional ORM and ODM frameworks, including Python (SQLAlchemy to Beanie/Motor), Node.js (Prisma to Mongoose), and Go (GORM to Ent).
-* **Goal**: Support additional target paradigms, such as Relational to Time-Series (MSSQL to InfluxDB).
+- **Goal**: Pre-bake the standard Maven `.m2` cache and NuGet fallback folders into the Daytona sandbox image layers.
+- **Impact**: Cut compile/validation time from minutes to **under 10 seconds**.
 
-## 4. Human-in-the-Loop Workflow Improvements
-Currently, when `MAX_TRANSLATION_LOOPS = 3` is reached, the orchestrator routes to `human_intervention_node` which triggers a simple interrupt.
-* **Goal**: Build a web-based IDE widget inside the ORMorpher UI. This will allow developers to modify failing target code in real-time, view side-by-side compilation errors, and submit back to the graph validation loop.
+## 2. Faster Runs via Better Context Engineering
+
+The translation prompt is the largest and slowest stage because it injects full configs, multiple few-shot examples, and complete harness skeletons. As target schemas grow, the injected mapping files also grow and threaten the context window.
+
+- **Goal**: Add **retrieval-augmented context** (e.g. a vector store over schema mappings) so only the *relevant* tables/entities are injected for a given query, rather than the whole mapping.
+- **Goal**: Trim and templatize few-shot examples and harness skeletons to reduce input tokens without losing grounding.
+- **Impact**: Lower per-run latency and cost, and support large schemas (thousands of entities) without hitting context limits. See [Context Engineering](/user_docs/context_engineering).
+
+## 3. More Translation Pairs (Bidirectional)
+
+UOM currently supports translation **in one direction only**: `.NET source → Java Spring Data target` (enforced by the `SourceFramework` / `TargetFramework` enums).
+
+- **Goal**: Enable the reverse direction (`Java Spring Data → .NET`) and, eventually, arbitrary source↔target pairs within the supported set.
+- **Goal**: Surface the new directions as UI suggestion cards. See [Design Decisions §2.3](/user_docs/design_decisions#23-current-direction-one-way-net-java-spring-data).
+
+## 4. More Frameworks & Paradigms
+
+- **Goal**: Add ORM/ODM/OGM frameworks beyond the current five — e.g. Python (SQLAlchemy → Beanie/Motor), Node.js (Prisma → Mongoose), Go (GORM → Ent).
+- **Goal**: Add new target paradigms such as Relational → Time-Series (MSSQL → InfluxDB).
+- The extension path (enums, context files, prompts, validators) is documented in the [Contribution Guide](/developer_docs/contribution).
 
 ## 5. Extensive Evaluation Experiments
-* **Goal**: Set up automated translation benchmark suites utilizing the WideWorldImporters (WWI) dataset and query sets.
-* **Goal**: Systematically calculate pass/fail rates across different LLM backends (Ollama, EINFRA, OpenAI, Anthropic) to optimize translation accuracy and model selection.
+
+- **Goal**: Build automated benchmark suites over the [WideWorldImporters](https://learn.microsoft.com/en-us/sql/samples/wide-world-importers-what-is) dataset and a curated query set.
+- **Goal**: Systematically measure pass/fail rates and latency across LLM backends (Ollama, e-INFRA, OpenAI, Anthropic) at `temperature=0` to optimize model selection and prompt/context design.
+- **Impact**: Replace anecdotal confidence with measured accuracy, and ground future prompt/context changes in data.
+
+## 6. Hardening the Human-in-the-Loop Stage
+
+When `MAX_TRANSLATION_LOOPS = 3` is reached, the graph routes to `human_intervention_node`, which raises a LangGraph `interrupt()`. This path is functional but under-tested.
+
+- **Goal**: Add end-to-end tests for the suspend/resume flow (accept, reject-with-feedback, loop-reset) to guarantee the graph reliably resumes from a checkpoint.
+- **Goal**: Build a richer in-IDE / in-UI widget so developers can edit failing target code in place, see side-by-side compiler errors and DeepDiff output, and submit corrections back into the validation loop.
+- See the [User Guide §4](/user_docs/user_guide#4-troubleshooting-manual-interventions) for the current behaviour.
+
+## 7. Stability & Bug Fixing
+
+- **Goal**: Fix known edge cases in extraction (ambiguous multi-turn inputs), sandbox provisioning (transient Daytona/Docker timeouts), and equivalence checking (exotic type coercions).
+- **Goal**: Improve error surfaces so failures are actionable for users rather than raw stack traces.
+- **Goal**: Expand unit/integration coverage across nodes, validators, and the MCP adapters.
+
+---
+
+## Tracking
+
+Issues and progress are tracked on the project repository: [github.com/corovcam/Universal-Object-Mapping](https://github.com/corovcam/Universal-Object-Mapping).
